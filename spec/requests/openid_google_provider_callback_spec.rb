@@ -58,13 +58,13 @@ RSpec.describe "OpenID Google provider callback", with_ee: %i[sso_auth_providers
       status: 200,
       body: {
         "access_token" =>
-        "ya29.a0Ael9sCPGoZQiKuMHHVKiaiWV9NatII8T7ZY6XiwTcY-VtvSnmPH53BXDoWGU7OpFY7ctZjY0Qf-Cd_5HHULGoF_m-3WEgMvuO7F11nbYI7qoe95enqneFgDh__vvTxGRAGPpl_Xf7qbXVznh35-DHuvhyPAZmMwaCgYKAQISARASFQF4udJhMeehVtS01I8wd8HL6ReQDw0166",
+        "ya29.EXEMPLE-DE-JETON-D-ACCES-SANS-VALEUR",
         "expires_in" => 3594,
         "scope" =>
         "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid",
         "token_type" => "Bearer",
         "id_token" =>
-        "eyJhbGciOiJSUzI1NiIsImtpZCI6IjFhYWU4ZDdjOTIwNThiNWVlYTQ1Njg5NWJmODkwODQ1NzFlMzA2ZjMiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXpwIjoiNDI3NzUwNzQ4MTg2LWQ4OGozamNlYmN2bGlxMmd0a3RiZm1oc2lhNjYxZDU4LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoiNDI3NzUwNzQ4MTg2LWQ4OGozamNlYmN2bGlxMmd0a3RiZm1oc2lhNjYxZDU4LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTA3NDAzNTExMDM3OTIxMzU1MzA3IiwiZW1haWwiOiJiYTFhc2hwYXNoQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhdF9oYXNoIjoiVFBtc0ZHRng4cjdrb3RiZkJud0xVdyIsImlhdCI6MTY4MDYxMjE5NCwiZXhwIjoxNjgwNjE1Nzk0fQ.IDKlHDVg1d7tAqb8eRiq90T52xnwVX9huDjpdLoJpqr4xlnTrFCdalxJBBHd9Cv39g2KPuJaCU21B59yNAyJP6bl5P8e9Ky-y8wOFcgHqcG5qXcNtxCS3imASCchRTtre8yp9AQGYkTIC0Jh6lWg0trdfO-_idKBsd5naJeaeYdeZGkpQ8D4dxn_odla67BO3y2mUtyE4gEbzyq6wTXDATN4ucM4Dyp3Wdk7YpYYuFN1g-sF6NFl4YqugQ4zk-pYYtPLlPgGiqi3_hO9kYbRDhNBtfbMx568m-CyM2tiOIkb4utPR20scSiRqnY2oxOcd5g9znvJOjtanHM3KVdj5g"
+        "eyJhbGciOiJSUzI1NiIsImtpZCI6IjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXpwIjoiMDAwMDAwMDAwMDAwLWV4ZW1wbGUuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiIwMDAwMDAwMDAwMDAtZXhlbXBsZS5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsInN1YiI6IjEwNzQwMzUxMTAzNzkyMTM1NTMwNyIsImVtYWlsIjoiZW1haWxAZHVtbXkuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiJBQUFBQUFBQUFBQUFBQUFBQUFBQUFBIiwiaWF0IjoxNjgwNjEyMTk0LCJleHAiOjE2ODA2MTU3OTR9.SIGNATURE-FACTICE-JETON-DE-TEST-SANS-VALEUR"
       }.to_json,
       headers: { "content-type" => "application/json; charset=utf-8" }
     )
