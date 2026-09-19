@@ -1,96 +1,229 @@
-# OpenProject
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/opf/openproject)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/opf/openproject)
-![GitHub branch checks state](https://img.shields.io/github/checks-status/opf/openproject/dev)
-[![Github Tests](https://github.com/opf/openproject/actions/workflows/test-core.yml/badge.svg?branch=dev)](https://github.com/opf/openproject/actions/workflows/test-core.yml)
+# OpenProject — refonte UI/UX
 
-**We empower teams to achieve great things together for the good of society.**
+Fork d'[OpenProject](https://github.com/opf/openproject) 17.8 dont l'interface
+a été reconstruite, dans l'esprit de Plane CE.
 
-OpenProject is a web-based open source project management software for teams and organizations that require transparency, flexibility, and data sovereignty.
-Manage projects, portfolios, products, tasks, bugs, agile workflows, roadmaps, and team collaboration in a single platform. OpenProject can be self-hosted and is designed for organizations looking for an open source enterprise-ready alternative to tools such as Jira, MS Project, Monday, Asana, YouTrack while maintaining full control over their data and infrastructure.
+Une contrainte a été tenue d'un bout à l'autre : **aucune fonctionnalité
+retirée**. Les pages d'origine ne sont pas supprimées, elles sont rangées —
+chaque navigation reconstruite garde une section « Vues classiques » repliée
+qui y mène. Tout ce qui est disponible sans licence Enterprise reste
+accessible.
 
-OpenProject is trusted by organizations worldwide, including enterprises, public institutions, and highly regulated industries.
+Quinze écrans ont été reconstruits : contrôleur propre, vue propre, feuille de
+style propre. Ce n'est pas un thème posé sur l'existant.
 
-![Screenshot of OpenProject, showing the GitHub tab on a work package](GitHub-tab-new.png)
+---
 
-**OpenProject's key features include:**
+## Avant / après
 
-* [Project and portfolio management](https://www.openproject.org/collaboration-software-features/project-portfolio-management/)
-* [Agile boards, Kanban, Scrum, SAFe](https://www.openproject.org/collaboration-software-features/agile-project-management/)
-* [Project planning and scheduling with Gantt charts](https://www.openproject.org/collaboration-software-features/project-planning-scheduling/)
-* [Product and release planning](https://www.openproject.org/collaboration-software-features/product-development/)
-* [Task management and team collaboration](https://www.openproject.org/collaboration-software-features/task-management/)
-* [Time tracking, cost reporting, and budgeting](https://www.openproject.org/collaboration-software-features/time-tracking/)
-* [Bug tracking](https://www.openproject.org/collaboration-software-features/#bug-tracking)
-* [Team collaboration, wikis, forums, news](https://www.openproject.org/collaboration-software-features/team-collaboration/)
-* [Meeting agendas and meeting minutes](https://www.openproject.org/collaboration-software-features/meeting-management/)
-* [Integrations: Nextcloud, XWiki, GitHub, GitLab, and more](https://www.openproject.org/integrations/)
+Les captures « origine » viennent d'une instance OpenProject **vierge** montée
+pour l'occasion, et non de l'instance modifiée : photographier l'ancien contenu
+dans la nouvelle coquille n'aurait rien prouvé. Mêmes données de démonstration
+des deux côtés.
 
-More information can be found on our [website](https://www.openproject.org).
+### Accueil
 
-## Start now with OpenProject
+| Origine | Refonte |
+| --- | --- |
+| ![Accueil d'origine](docs/captures/accueil-origine.png) | ![Accueil reconstruit](docs/captures/accueil-refonte.png) |
 
-- **Free Trial**: [Start a 14-days free trial of OpenProject](https://start.openproject.com/).
-- **Community Edition**, free of charge: Download OpenProject and get started with the self-hosted Community edition. If you want to run an instance of OpenProject in production (or for evaluation), refer to our in-depth [installation guides](https://www.openproject.org/download-and-installation/).
-- **Enterprise Edition**: Sign up for the Enterprise version, choose between cloud or on-premises and benefit from comprehensive support and Enterprise add-ons.
-- **Documentation**: Explore our [comprehensive documentation](https://www.openproject.org/docs/) to help you get up and running quickly.
-- **Training**: [Book one of our training or consulting offers](https://www.openproject.org/training-and-consulting/#training-signup) to get your team on board in no time.
+L'accueil d'origine présente le produit. Celui-ci ouvre la journée : retards,
+échéances proches, projets suivis.
 
-## Report bugs
+### Travail
 
-You found a bug? Please [report it](https://www.openproject.org/docs/development/report-a-bug/) to our [OpenProject Community](https://community.openproject.org/projects/openproject). Thank you!
+| Origine | Refonte |
+| --- | --- |
+| ![Lots de travaux d'origine](docs/captures/travail-origine.png) | ![Travail reconstruit](docs/captures/travail-refonte.png) |
 
-## Contribute
+Groupé par statut, une ligne par lot, création au pied de chaque groupe. La
+table filtrable d'origine reste accessible — elle porte l'export, les colonnes
+configurables et les vues enregistrées.
 
-OpenProject is supported by its Community members, both companies and individuals.
+### Frise
 
-We are always looking for new members to our Community, so if you are interested in improving OpenProject we would be glad to welcome and support you getting into the code. There are guides as well, e.g. a [Quick Start for Developers](https://www.openproject.org/docs/development/development-environment/), but don't hesitate to simply [contact us](https://www.openproject.org/contact) if you have questions.
+| Origine | Refonte |
+| --- | --- |
+| ![Gantt d'origine](docs/captures/frise-origine.png) | ![Frise reconstruite](docs/captures/frise-refonte.png) |
 
-Working on OpenProject comes with the satisfaction of working on a widely used open source application.
+Construite de zéro : grille CSS, dépendances tracées côté serveur, libellés
+dans les barres, sélecteur de période, barre de défilement horizontale propre.
 
-Also, if you do not want to be limited to working on open source in your free time, OpenProject GmbH, the company contributing to the OpenProject development, [is hiring](https://www.openproject.org/career/).
+### Projets
 
+| Origine | Refonte |
+| --- | --- |
+| ![Liste de projets d'origine](docs/captures/projets-origine.png) | ![Projets reconstruit](docs/captures/projets-refonte.png) |
 
-## Stay in contact
+Des cartes pour entrer dans un projet. Le tableau d'origine sert à comparer des
+colonnes ; il reste à un clic.
 
-Here you can find our [contact information](https://www.openproject.org/contact/). As we regularly update OpenProject, we recommend staying in touch – here is where you can find us:
+### Mon temps
 
-- [OpenProject Community](https://www.openproject.org/blog/community-instance/) with [forum discussions](https://community.openproject.org/projects/openproject/forums): The open instance where we develop our features – transparent and open for discussions, bug reports or feature requests.
-- [LinkedIn](https://www.linkedin.com/company/18706985)
-- [Reddit](https://www.reddit.com/r/openproject/)
-- [Fosstodon](https://fosstodon.org/@openproject)
-- [Bluesky](https://bsky.app/profile/openproject.bsky.social)
+| Origine | Refonte |
+| --- | --- |
+| ![Suivi du temps d'origine](docs/captures/mon-temps-origine.png) | ![Mon temps reconstruit](docs/captures/mon-temps-refonte.png) |
 
-## Security / responsible disclosure
+La semaine entière, jour par jour, avec les jours ouvrés sans saisie signalés.
+L'original n'affiche qu'un jour — or on complète son temps en fin de semaine.
 
-We take security very seriously at OpenProject. We value any kind of feedback that
-will keep our Community secure. If you happen to come across a security issue we urge
-you to disclose it to us privately to allow our users and Community enough time to
-upgrade. Security issues will always take precedence over anything else in the pipeline.
+### Wiki
 
-For more information on how to disclose a security vulnerability, [please see this page](docs/security-and-privacy/statement-on-security/README.md).
+| Origine | Refonte |
+| --- | --- |
+| ![Pages de wiki d'origine](docs/captures/wiki-origine.png) | ![Wiki reconstruit](docs/captures/wiki-refonte.png) |
 
-## License
+Un arbre par projet, parents et enfants. L'entrée globale d'origine rend une
+liste plate.
 
-OpenProject is licensed under the terms of the GNU General Public License version 3.
-See [COPYRIGHT](COPYRIGHT) and [LICENSE](LICENSE) files for details.
+### Menu de création
 
-## Credits
+| Origine | Refonte |
+| --- | --- |
+| ![Menu + d'origine](docs/captures/detail-menu-plus-origine.png) | ![Menu + reconstruit](docs/captures/detail-menu-plus-refonte.png) |
 
-### Icons
+Descendu du bandeau dans la latérale et refait à plat. Le composant d'origine
+empile trois niveaux par entrée, dont plusieurs reçoivent un fond au survol :
+on voyait deux surbrillances emboîtées sur une même ligne.
 
-Thanks to Vincent Le Moign and his fabulous Minicons icons on [webalys.com](http://www.webalys.com/minicons/icons-free-pack.php).
+Les deux thèmes, clair et sombre, sont traités.
 
-### OpenProject icon font
+---
 
-Published and created by the OpenProject Foundation (OPF) under [Creative Commons Attribution 3.0 Unported License](http://creativecommons.org/licenses/by/3.0/)
+## Les quinze écrans
+
+| Écran | Portée transverse | Portée projet |
+| --- | --- | --- |
+| Accueil | `/plane/home` | — |
+| Mon travail | `/plane/my` | — |
+| Mon temps | `/plane/time` | — |
+| Projets | `/plane/projects` | — |
+| Travail | `/plane/work` | `/projects/:id/plane` |
+| Frise (Gantt) | `/plane/gantt` | `/projects/:id/plane-gantt` |
+| Tableaux | `/plane/boards` | — |
+| Réunions | `/plane/meetings` | — |
+| Actualités | `/plane/news` | — |
+| Wiki | `/plane/wiki` | — |
+| Temps et coûts | `/plane/costs` | — |
+| Aperçu | — | `/projects/:id` |
+
+Travail et Frise existent en deux portées servies par le **même code**
+(`PlaneScope`) : sans `project_id`, la page bascule sur l'ensemble des lots
+visibles, et chaque ligne porte alors le nom de son projet.
+
+L'URL racine d'un projet sert désormais l'aperçu reconstruit — c'est là
+qu'arrivent le sélecteur de projet, la recherche et les fils d'Ariane. L'aperçu
+d'origine reste servi à `/projects/:id/apercu-origine`.
+
+## Autres changements
+
+- **Modale de confirmation maison** à la place de `window.confirm`, branchée sur
+  `Turbo.config.forms.confirm`. Toutes les navigations internes passent par elle.
+- **Invitation de plusieurs personnes en une fois**, par sélection multiple ou
+  par collage d'une liste d'adresses (virgule, point-virgule, retour à la
+  ligne). Un échec n'annule pas les autres.
+- **Navigation réorganisée** en sections thématiques, avec les entrées
+  Enterprise non activées repliées plutôt que masquées.
+
+## Ce qui n'a pas été reconstruit, et pourquoi
+
+- **Le canevas des tableaux** (colonnes, glisser-déposer, mise à jour en direct)
+  reste celui d'OpenProject : composant Angular avec de l'état temps réel, le
+  réécrire à moitié ferait perdre des fonctions. Seul l'index a été refait.
+- **Le générateur de rapports de coûts** reste d'origine, pour la même raison :
+  groupements libres, colonnes, export. La page reconstruite donne la réponse
+  immédiate et renvoie vers lui.
+- **`beforeunload`** reste la boîte native du navigateur. Les navigateurs
+  l'imposent délibérément pour empêcher un site de retenir l'internaute ; aucun
+  site ne peut la remplacer.
+
+## Points d'entrée du code
+
+```
+app/controllers/plane_*.rb                        les onze contrôleurs reconstruits
+app/controllers/concerns/plane_scope.rb           portée projet ou transverse
+app/views/plane_*/                                les vues
+app/views/layouts/_plane_*.html.erb               coquille, navigation, menu de création
+app/helpers/plane_*.rb                            regroupement des menus, chemins
+frontend/src/global_styles/layout/_plane_*.sass   thème et pages
+frontend/src/turbo/plane-confirm.ts               modale de confirmation
+config/initializers/plane_routes.rb               reprise de la racine d'un projet
+```
+
+Les commentaires expliquent le *pourquoi* et documentent les pièges rencontrés :
+cascade CSS contre Primer, géométrie de la frise et alignement des connecteurs,
+conventions non documentées d'OpenProject pour greffer une page.
+
+## Lancer
+
+```bash
+cp .env.example .env                                        # ajuster PORT, DEV_UID, DEV_GID
+cp docker-compose.override.yml.example docker-compose.override.yml
+docker compose up -d db cache backend worker frontend
+```
+
+L'application répond sur le `PORT` du fichier `.env`.
+
+Ne lancez pas `docker compose up -d` sans arguments : les conteneurs de test
+démarrent avec, et l'échec de l'un d'eux interrompt l'ensemble.
+
+### Mémoire
+
+Le compose amont lance le serveur Angular avec 8 Go de tas Node. Sur une machine
+de développement ordinaire, le noyau tue le conteneur sous la charge d'une
+recompilation — et la page devient blanche sans la moindre erreur applicative,
+ce qui rend la panne difficile à diagnostiquer. Le fichier d'override ramène ce
+plafond à 3 Go, ce qui suffit très largement.
+
+### Où placer les sources
+
+Elles sont montées dans les conteneurs par un *bind mount*. Sous Windows,
+gardez-les sur `C:` : Docker Desktop y partage nativement.
+
+Un emplacement dans une distribution WSL demande en revanche que l'intégration
+WSL soit activée pour cette distribution précise (Docker Desktop → Settings →
+Resources → WSL Integration). Sans elle, le démon reste joignable mais **ne
+partage aucun fichier** : les conteneurs montent un dossier vide et échouent sur
+`Could not locate Gemfile`, sans que rien n'indique la cause réelle.
+
+---
+
+## Amont, licence et crédits
+
+Ce dépôt est dérivé d'[OpenProject](https://github.com/opf/openproject),
+logiciel libre publié par OpenProject GmbH sous **GNU GPL v3**. Cette refonte
+est distribuée sous la même licence. Voir [LICENSE](LICENSE) et
+[COPYRIGHT](COPYRIGHT).
+
+La documentation, le suivi des bogues et la communauté d'OpenProject restent les
+références pour tout ce qui ne relève pas de cette refonte :
+
+- Documentation : <https://www.openproject.org/docs/>
+- Dépôt amont : <https://github.com/opf/openproject>
+- Divulgation de vulnérabilité :
+  [statement on security](docs/security-and-privacy/statement-on-security/README.md)
+
+L'historique amont n'est pas présent dans ce dépôt : le clone de travail était
+superficiel (`--depth`). Le premier commit est un instantané de l'arbre amont au
+commit `2d1ae9c1`, le second porte l'intégralité de la refonte —
+`git diff HEAD~1 HEAD` la montre donc exactement.
+
+### Icônes
+
+Thanks to Vincent Le Moign and his fabulous Minicons icons on
+[webalys.com](http://www.webalys.com/minicons/icons-free-pack.php).
+
+### Police d'icônes OpenProject
+
+Published and created by the OpenProject Foundation (OPF) under
+[Creative Commons Attribution 3.0 Unported License](http://creativecommons.org/licenses/by/3.0/)
 with icons from the following sources
 [Minicons Free Vector Icons Pack](http://www.webalys.com/minicons) and
-[User Interface Design framework](http://www.webalys.com/design-interface-application-framework.php) both by webalys
+[User Interface Design framework](http://www.webalys.com/design-interface-application-framework.php)
+both by webalys.
 
-**Creative Commons License**
-
-OpenProject Icon Font by the OpenProject Foundation (OPF) is licensed under Creative Commons Attribution 3.0 Unported License
-and Free for both personal and commercial use. You can copy, adapt, remix, distribute or transmit it.
-
-Under this condition: provide a mention of the "OpenProject Foundation" and a link back to OpenProject www.openproject.org.
+OpenProject Icon Font by the OpenProject Foundation (OPF) is licensed under
+Creative Commons Attribution 3.0 Unported License and free for both personal and
+commercial use. You can copy, adapt, remix, distribute or transmit it, under this
+condition: provide a mention of the "OpenProject Foundation" and a link back to
+OpenProject www.openproject.org.
