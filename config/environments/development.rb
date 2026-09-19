@@ -41,8 +41,24 @@ Rails.application.configure do
   # Do not eager load code on boot by default.
   config.eager_load = ENV["EAGER_LOAD"].present?
 
-  # Asynchronous file watcher
-  config.file_watcher = ActiveSupport::EventedFileUpdateChecker
+  # Surveillant de fichiers.
+  #
+  # EventedFileUpdateChecker s'appuie sur les notifications du systeme de
+  # fichiers (inotify). Elles ne TRAVERSENT PAS un montage Docker depuis un
+  # hote Windows ou macOS : le conteneur ne recoit jamais l'evenement, Rails
+  # ne recharge jamais, et on obtient le pire des symptomes — une erreur qui
+  # cite l'ancien code pendant que la page d'erreur affiche le nouveau
+  # fichier, lu directement sur le disque. On croit corriger sans effet.
+  #
+  # FileUpdateChecker interroge le disque a chaque requete. C'est plus lent,
+  # mais c'est la seule methode qui fonctionne a travers un tel montage.
+  # Sur un hote Linux, ou les notifications passent, on garde la version
+  # evenementielle.
+  config.file_watcher = if ENV["OPENPROJECT_DEV_POLL__FILES"] == "true"
+                          ActiveSupport::FileUpdateChecker
+                        else
+                          ActiveSupport::EventedFileUpdateChecker
+                        end
 
   # Show full error reports
   config.consider_all_requests_local = true

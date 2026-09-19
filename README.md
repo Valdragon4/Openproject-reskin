@@ -92,28 +92,50 @@ Les deux thèmes, clair et sombre, sont traités.
 
 ## Les quinze écrans
 
-| Écran | Portée transverse | Portée projet |
+Les pages reconstruites occupent les **adresses canoniques**. Les pages
+d'origine restent servies, sous `/legacy`.
+
+| Écran | Adresse | Page d'origine |
 | --- | --- | --- |
-| Accueil | `/plane/home` | — |
-| Mon travail | `/plane/my` | — |
-| Mon temps | `/plane/time` | — |
-| Projets | `/plane/projects` | — |
-| Travail | `/plane/work` | `/projects/:id/plane` |
-| Frise (Gantt) | `/plane/gantt` | `/projects/:id/plane-gantt` |
-| Tableaux | `/plane/boards` | — |
-| Réunions | `/plane/meetings` | — |
-| Actualités | `/plane/news` | — |
-| Wiki | `/plane/wiki` | — |
-| Temps et coûts | `/plane/costs` | — |
-| Aperçu | — | `/projects/:id` |
+| Accueil | `/` | `/legacy` |
+| Mon travail | `/my/page` | `/legacy/my/page` |
+| Mon temps | `/my/time-tracking` | `/legacy/my/time-tracking` |
+| Projets | `/projects` | `/legacy/projects` |
+| Travail | `/work_packages` | `/legacy/work_packages` |
+| Frise (Gantt) | `/gantt` | `/legacy/gantt` |
+| Tableaux | `/boards` | `/legacy/boards` |
+| Réunions | `/meetings` | `/legacy/meetings` |
+| Actualités | `/news` | `/legacy/news` |
+| Wiki | `/wiki_pages` | `/legacy/wiki_pages` |
+| Temps et coûts | `/cost_reports` | `/legacy/cost_reports` |
+
+Et en portée projet :
+
+| Écran | Adresse | Page d'origine |
+| --- | --- | --- |
+| Aperçu | `/projects/:id` | `/legacy/projects/:id` |
+| Travail | `/projects/:id/work_packages` | `/legacy/projects/:id/work_packages` |
+| Frise | `/projects/:id/gantt` | `/legacy/projects/:id/gantt` |
 
 Travail et Frise existent en deux portées servies par le **même code**
 (`PlaneScope`) : sans `project_id`, la page bascule sur l'ensemble des lots
 visibles, et chaque ligne porte alors le nom de son projet.
 
-L'URL racine d'un projet sert désormais l'aperçu reconstruit — c'est là
-qu'arrivent le sélecteur de projet, la recherche et les fils d'Ariane. L'aperçu
-d'origine reste servi à `/projects/:id/apercu-origine`.
+### Les vues enregistrées ne sont pas capturées
+
+`/work_packages` ne sert pas qu'un index : avec `?query_id=` ou
+`?query_props=`, il sert une **vue enregistrée** — ce sont les sous-entrées du
+menu, « Tous les éléments ouverts », « En retard », « Mes projets »…
+
+La page reconstruite ne répond donc que sur l'**adresse nue**. Dès qu'un
+paramètre de vue est présent, la requête continue jusqu'au contrôleur
+d'origine. Sans cette précaution, toutes ces vues auraient été cassées en
+silence : l'utilisateur aurait vu la page reconstruite au lieu de la sienne,
+sans la moindre erreur.
+
+Même principe pour les liens profonds : `/work_packages/42`,
+`/work_packages/details/...` et tout le routage client d'Angular sont
+intacts — seul l'index exact est repris.
 
 ## Autres changements
 

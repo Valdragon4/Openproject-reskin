@@ -47,10 +47,47 @@ module PlaneNavHelper
   # meme endroit que l'entree du haut, et la page d'origine serait devenue
   # introuvable. On redirige donc explicitement cette entree vers l'adresse
   # que la route lui a reservee.
-  def plane_node_url(node, url)
-    return url unless node.name == :overview && @project&.persisted?
+  #
+  # Le nom de cette route a change avec la bascule des adresses : l'apercu
+  # d'origine vivait a /projects/:id/apercu-origine, il vit desormais sous
+  # /legacy avec tous ses semblables — et le nom genere a suivi. Oublier de
+  # le reporter ici faisait tomber toute page de projet en NoMethodError,
+  # puisque la laterale est rendue par le gabarit de base.
+  #
+  # Meme traitement pour les deux autres entrees de « Vues classiques » :
+  # elles se resolvent par controleur/action, donc vers les adresses
+  # canoniques — c'est-a-dire vers les pages reconstruites. Sans cette
+  # redirection, la section entiere renverrait sur elle-meme.
+  # Dans un projet : l'aide prend le projet en argument.
+  PLANE_LEGACY_PROJET = {
+    overview: :legacy_project_overview_path,
+    work_packages: :legacy_project_work_packages_path,
+    gantt: :legacy_project_gantt_path
+  }.freeze
 
-    project_classic_overview_path(@project)
+  # Hors projet : l'aide ne prend rien.
+  PLANE_LEGACY_GLOBAL = {
+    home: :legacy_home_path,
+    my_page: :legacy_my_page_path,
+    my_time_tracking: :legacy_my_time_tracking_path,
+    projects: :legacy_projects_path,
+    work_packages: :legacy_work_packages_path,
+    gantt: :legacy_gantt_path,
+    boards: :legacy_boards_path,
+    meetings: :legacy_meetings_path,
+    news: :legacy_news_path,
+    wikis: :legacy_wiki_pages_path,
+    cost_reports_global: :legacy_cost_reports_path
+  }.freeze
+
+  def plane_node_url(node, url)
+    if @project&.persisted?
+      aide = PLANE_LEGACY_PROJET[node.name]
+      aide ? public_send(aide, @project) : url
+    else
+      aide = PLANE_LEGACY_GLOBAL[node.name]
+      aide ? public_send(aide) : url
+    end
   end
 
   # ---------------------------------------------------------------------
