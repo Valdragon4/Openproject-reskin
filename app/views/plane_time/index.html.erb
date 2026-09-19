@@ -1,0 +1,103 @@
+<%#
+  Mon temps : une semaine, jour par jour.
+
+  Les jours sans saisie sont rendus, et marques : c'est l'information qu'on
+  vient chercher. La saisie reste celle d'OpenProject — on change la lecture,
+  pas le formulaire.
+%>
+<% html_title "Mon temps" %>
+
+<div class="op-plane-page op-plane-time">
+  <%= render partial: "plane_shared/head",
+             locals: {
+               titre: "Mon temps",
+               sous_titre: "Semaine du #{l(@week_start, format: '%-d %B')} au #{l(@week_end, format: '%-d %B %Y')}",
+               origine_label: "Suivi d'origine",
+               origine_path: "/my/time-tracking/today",
+               actions: capture {
+                 concat link_to("← Semaine précédente", plane_time_path(semaine: @week_start - 7), class: "op-plane-page--secondary")
+                 concat link_to("Cette semaine", plane_time_path, class: "op-plane-page--secondary")
+                 concat link_to("Semaine suivante →", plane_time_path(semaine: @week_start + 7), class: "op-plane-page--secondary")
+               }
+             } %>
+
+  <ul class="op-plane-stats">
+    <li class="op-plane-stat">
+      <span class="op-plane-stat--value"><%= number_with_precision(@total, precision: 1, strip_insignificant_zeros: true) %> h</span>
+      <span class="op-plane-stat--label">total de la semaine</span>
+    </li>
+    <li class="op-plane-stat">
+      <span class="op-plane-stat--value"><%= @days.count { |d| d[:hours].zero? && !d[:date].saturday? && !d[:date].sunday? } %></span>
+      <span class="op-plane-stat--label">jours ouvrés sans saisie</span>
+    </li>
+    <li class="op-plane-stat">
+      <span class="op-plane-stat--value"><%= @by_project.size %></span>
+      <span class="op-plane-stat--label">projets concernés</span>
+    </li>
+  </ul>
+
+  <% if @by_project.any? %>
+    <section class="op-plane-section">
+      <h2 class="op-plane-section--title">Répartition par projet</h2>
+      <ul class="op-plane-list">
+        <% @by_project.each do |nom, heures| %>
+          <li class="op-plane-list--row">
+            <span class="op-plane-list--link">
+              <span class="op-plane-list--name"><%= nom %></span>
+              <span class="op-plane-list--date"><%= number_with_precision(heures, precision: 1, strip_insignificant_zeros: true) %> h</span>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <section class="op-plane-section">
+    <h2 class="op-plane-section--title">Jour par jour</h2>
+
+    <% @days.each do |jour| %>
+      <%# Un week-end vide est normal, un jour ouvre vide ne l'est pas :
+          les deux ne doivent pas se signaler de la meme facon. %>
+      <% weekend = jour[:date].saturday? || jour[:date].sunday? %>
+      <div class="op-plane-time--day<%= " -weekend" if weekend %><%= " -empty" if jour[:hours].zero? && !weekend %>">
+        <div class="op-plane-time--day-head">
+          <span class="op-plane-time--day-name">
+            <%= l(jour[:date], format: "%A %-d %B").capitalize %>
+            <% if jour[:date] == Date.current %><span class="op-plane-time--today">aujourd'hui</span><% end %>
+          </span>
+          <span class="op-plane-time--day-total">
+            <%= jour[:hours].zero? ? "—" : "#{number_with_precision(jour[:hours], precision: 1, strip_insignificant_zeros: true)} h" %>
+          </span>
+        </div>
+
+        <% if jour[:entries].any? %>
+          <ul class="op-plane-list">
+            <% jour[:entries].each do |entry| %>
+              <li class="op-plane-list--row">
+                <%# Une saisie de temps n'a pas de page a elle : son edition
+                    passe par une boite de dialogue depuis son contexte. On
+                    renvoie donc vers ce contexte — le lot concerne, sinon
+                    le projet. %>
+                <% cible = entry.entity.is_a?(WorkPackage) ? work_package_path(entry.entity) : project_plane_home_path(entry.project) %>
+                <%= link_to cible, class: "op-plane-list--link" do %>
+                  <span class="op-plane-list--sub">
+                    <span class="op-plane-list--name">
+                      <%= entry.entity.is_a?(WorkPackage) ? "##{entry.entity.id} #{entry.entity.subject}" : (entry.comments.presence || "Temps enregistré") %>
+                    </span>
+                    <span class="op-plane-list--meta"><%= entry.activity&.name %><%= " · #{entry.comments}" if entry.comments.present? && entry.entity.is_a?(WorkPackage) %></span>
+                  </span>
+                  <span class="op-plane-list--right">
+                    <% if entry.project %>
+                      <span class="op-plane-list--chip"><%= entry.project.name %></span>
+                    <% end %>
+                    <span class="op-plane-list--date"><%= number_with_precision(entry.hours, precision: 2, strip_insignificant_zeros: true) %> h</span>
+                  </span>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+</div>

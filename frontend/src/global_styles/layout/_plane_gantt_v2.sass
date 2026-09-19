@@ -1,0 +1,781 @@
+// Frise — construite de zero.
+//
+// MODELE DE MISE EN PAGE
+// Un seul conteneur defile (.op-gantt--scroll). A l'interieur, une grille a
+// deux colonnes : une colonne de gauche fixe (les noms) et une colonne de
+// temps large de N jours. La colonne de gauche est collante a gauche,
+// l'en-tete collant en haut. La synchronisation des deux axes est donc
+// STRUCTURELLE — aucun JavaScript ne recopie une position de defilement.
+//
+// L'echelle est une grille CSS : chaque barre se pose en
+// grid-column: var(--col) / span var(--span). Le serveur fournit les index,
+// le navigateur fait le reste. Pas un pixel calcule a la main.
+
+// Ces trois valeurs sont partagees avec PlaneGanttController (ROW_H,
+// GROUP_H, BAR_H) : les tracés de dependance y sont calcules en pixels.
+// Les modifier ici sans les modifier la-bas desaligne les connecteurs.
+$side: 280px
+$row: 44px
+$group: 34px
+
+// La hauteur d'en-tete doit etre DETERMINISTE : la couche de dependances
+// s'ancre dessus. 26px pour la bande des mois + 20px pour les jours + 1px
+// de filet. Toute modification de ces trois valeurs doit etre reportee ici.
+.op-gantt
+  --gantt-side: #{$side}
+  --gantt-row: #{$row}
+  --gantt-header-h: 47px
+
+  display: flex
+  flex-direction: column
+  // PAS de calc(100vh - 8px) : la zone de contenu d'OpenProject vaut deja
+  // calc(100dvh - var(--header-height)). Reprendre 100vh ici ajoutait la
+  // hauteur du bandeau et produisait une SECONDE barre de defilement, avec
+  // un en-tete collant partiellement hors d'atteinte. C'est le meme piege
+  // --header-height que plus haut dans la refonte : le parent est deja
+  // borne, il suffit de le remplir.
+  height: 100%
+  min-height: 0
+  padding: 20px 20px 0
+  gap: 14px
+
+// -------------------------------------------------------------- En-tete
+.op-gantt--head
+  display: flex
+  align-items: flex-start
+  justify-content: space-between
+  gap: 16px
+  flex-wrap: wrap
+  flex: 0 0 auto
+
+.op-gantt--title
+  margin: 0
+  font-size: 1.375rem
+  font-weight: 650
+  letter-spacing: -.02em
+  color: var(--plane-n-1200)
+
+.op-gantt--sub
+  margin: 2px 0 0
+  font-size: 12px
+  color: var(--plane-n-1000)
+  font-variant-numeric: tabular-nums
+
+.op-gantt--sub-count,
+.op-gantt--sub-flag
+  margin-left: 8px
+  padding: 1px 7px
+  border-radius: 999px
+  font-size: 10.5px
+  font-weight: 600
+
+.op-gantt--sub-count
+  background: var(--plane-n-300)
+  color: var(--plane-n-900)
+
+.op-gantt--sub-flag
+  background: var(--plane-brand-subtle)
+  border: 1px solid var(--plane-brand-border)
+  color: var(--plane-brand-active)
+
+.op-gantt--tools
+  display: flex
+  align-items: center
+  gap: 10px
+  flex-wrap: wrap
+
+// ------------------------------------------------------ Barre de periode
+// Trois blocs qui se lisent de gauche a droite : ou je suis / quelle
+// fenetre / raccourcis. flex-wrap plutot qu'une grille : les trois groupes
+// n'ont aucune largeur commune a aligner, et sur un ecran etroit chacun
+// doit pouvoir passer a la ligne d'un seul tenant.
+.op-gantt--timebar
+  flex: 0 0 auto
+  display: flex
+  align-items: center
+  gap: 10px
+  flex-wrap: wrap
+  padding: 8px 10px
+  border: 1px solid var(--plane-n-500)
+  border-radius: 10px
+  background: var(--plane-surface)
+
+.op-gantt--move
+  display: inline-flex
+  align-items: center
+  gap: 2px
+  padding: 2px
+  background: var(--plane-n-300)
+  border-radius: 8px
+
+// Cible de 28px de haut : en dessous, une fleche seule devient penible a
+// viser, a la souris comme au doigt.
+.op-gantt--move-btn
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  min-width: 28px
+  height: 28px
+  padding-inline: 6px
+  border-radius: 6px
+  font-size: 15px
+  line-height: 1
+  font-weight: 600
+  color: var(--plane-n-1000)
+  text-decoration: none
+  transition: background-color 140ms cubic-bezier(.2, .7, .3, 1), color 140ms cubic-bezier(.2, .7, .3, 1)
+
+  &.-wide
+    padding-inline: 12px
+    font-size: 12px
+    font-weight: 500
+
+  &:hover
+    background: var(--plane-surface)
+    color: var(--plane-n-1200)
+    text-decoration: none
+
+.op-gantt--period
+  display: inline-flex
+  align-items: center
+  gap: 6px
+  flex: 0 0 auto
+  margin: 0
+
+.op-gantt--period-label
+  flex: 0 0 auto
+  font-size: 12px
+  color: var(--plane-n-900)
+
+// Le champ natif porte deja son calendrier : on ne le reimplemente pas, on
+// l'habille. Hauteur fixee pour qu'il s'aligne sur les boutons voisins —
+// un champ date n'a pas la meme hauteur intrinseque d'un systeme a l'autre.
+//
+// LARGEUR EXPLICITE OBLIGATOIRE, ET SELECTEUR PLUS SPECIFIQUE QUE LE NOM
+// DE CLASSE SEUL.
+// _forms.sass pose `input[type="date"] { width: 100%; margin: 0 0 1rem }`.
+// Ce selecteur vaut (0,1,1) : une simple `.op-gantt--date` (0,1,0) perd, et
+// les deux champs s'etalaient sur 400px chacun, poussant les libelles a la
+// ligne et les raccourcis par-dessus. D'ou le selecteur descendant, qui
+// passe a (0,2,1).
+.op-gantt--timebar input.op-gantt--date
+  flex: 0 0 auto
+  width: 140px
+  height: 28px
+  margin: 0
+  padding: 0 8px
+  border: 1px solid var(--plane-n-500)
+  border-radius: 7px
+  background: var(--plane-surface)
+  color: var(--plane-n-1200)
+  font-size: 12px
+  font-family: inherit
+  font-variant-numeric: tabular-nums
+
+  &:focus
+    outline: 2px solid var(--plane-brand)
+    outline-offset: 1px
+    border-color: var(--plane-brand)
+
+.op-gantt--apply
+  flex: 0 0 auto
+  width: auto
+  height: 28px
+  display: inline-flex
+  align-items: center
+  border: 0
+  cursor: pointer
+  font-family: inherit
+
+// Filet de separation entre les reglages de fenetre et les raccourcis :
+// deux familles de commandes, une seule barre.
+.op-gantt--presets
+  display: inline-flex
+  align-items: center
+  gap: 6px
+  flex-wrap: wrap
+  padding-left: 10px
+  border-left: 1px solid var(--plane-n-500)
+
+  // Les raccourcis reprennent le bouton secondaire commun ; seule leur
+  // hauteur est ramenee a celle de la barre.
+  .op-plane-page--secondary
+    display: inline-flex
+    align-items: center
+    height: 28px
+    padding-inline: 10px
+    font-size: 12px
+
+// Revenir a la fenetre deduite est une sortie, pas un raccourci de plus :
+// une marge le detache du groupe.
+.op-gantt--reset
+  margin-left: 4px
+
+// Message de correction ou de troncature. Il n'est PAS decoratif : c'est
+// lui qui explique pourquoi la fenetre affichee n'est pas celle demandee.
+.op-gantt--notice
+  flex: 0 0 auto
+  margin: -6px 0 0
+  padding: 8px 12px
+  border-radius: 8px
+  border: 1px solid #E9A23B
+  background: color-mix(in oklab, #E9A23B 12%, transparent)
+  font-size: 12px
+  line-height: 1.45
+  color: var(--plane-n-1200)
+
+.op-gantt--zoom,
+.op-gantt--views
+  display: inline-flex
+  padding: 2px
+  gap: 2px
+  background: var(--plane-n-300)
+  border-radius: 8px
+
+.op-gantt--zoom-btn,
+.op-gantt--view
+  padding: 5px 11px
+  border-radius: 6px
+  font-size: 12px
+  font-weight: 500
+  color: var(--plane-n-1000)
+  text-decoration: none
+  transition: background-color 140ms cubic-bezier(.2, .7, .3, 1), color 140ms cubic-bezier(.2, .7, .3, 1)
+
+  &:hover
+    color: var(--plane-n-1200)
+    background: var(--plane-n-200)
+
+  &.is-current
+    background: var(--plane-surface)
+    color: var(--plane-n-1200)
+    box-shadow: 0 1px 2px -1px rgb(41 47 61 / .12)
+
+// --------------------------------------------------------- Le conteneur
+.op-gantt--scroll
+  flex: 1 1 auto
+  min-height: 0
+
+  // overflow-x: hidden, PAS auto.
+  //
+  // C'est la seule facon sure de n'avoir qu'UNE barre horizontale. Masquer
+  // la native par `::-webkit-scrollbar:horizontal { height: 0 }` marchait
+  // sous Chrome mais pas sous Edge, ou elle revient en surimpression : elle
+  // n'occupe aucune place, donc aucune mesure ne la voit, et elle se
+  // superpose quand meme a la notre. Deux barres l'une sur l'autre.
+  //
+  // hidden n'empeche PAS le defilement par script : scrollLeft reste
+  // pilotable, et c'est notre barre (.op-gantt--hbar) qui s'en charge. Le
+  // geste molette/pave tactile horizontal, lui, est bien neutralise par
+  // hidden : il est reimplante dans le script de la vue.
+  overflow-x: hidden
+  overflow-y: auto
+
+  border: 1px solid var(--plane-n-400)
+  border-radius: 10px
+  background: var(--plane-surface)
+
+  // ------------------------------------- Barre de defilement horizontale
+  //
+  // Elle EXISTAIT deja, mais haute de 2 pixels : la regle globale de
+  // l'application pose `scrollbar-width: thin` sur les zones qui defilent.
+  // Deux pixels conviennent a une barre verticale discrete ; sur l'axe
+  // horizontal d'une frise, c'est la commande PRINCIPALE de la page, et
+  // elle etait impossible a viser — au point de passer pour absente.
+  //
+  // PIEGE, PAYE ICI — `scrollbar-color` ANNULE `::-webkit-scrollbar`.
+  // Depuis Chrome 121, fixer scrollbar-width ou scrollbar-color fait passer
+  // l'element sur le rendu STANDARD des barres, et les pseudo-elements
+  // -webkit sont alors ignores. Or c'est le rendu standard qui produit ici
+  // une barre en surimpression, qui ne prend aucune place et s'efface des
+  // qu'on arrete de defiler — donc invisible au repos.
+  //
+  // On remet donc les deux proprietes a `auto` pour cet element seulement.
+  // Ce n'est pas une absence de reglage : c'est ce qui REND la main aux
+  // pseudo-elements ci-dessous, qui eux forcent une barre classique,
+  // toujours visible et large de 14 pixels.
+  //
+  // La barre vit au bas du conteneur, dont la hauteur est bornee : elle
+  // reste donc a l'ecran sans avoir a descendre dans la page.
+  scrollbar-width: auto
+  scrollbar-color: auto
+
+  // Seule la barre VERTICALE subsiste ici ; l'horizontale est supprimee par
+  // overflow-x: hidden ci-dessus.
+  &::-webkit-scrollbar
+    width: 10px
+
+  &::-webkit-scrollbar-track
+    background: var(--plane-n-200)
+    border-top: 1px solid var(--plane-n-400)
+    border-radius: 0 0 9px 9px
+
+  // La bordure transparente affine le pouce sans reduire la zone
+  // cliquable : on vise 14 pixels, on voit un trait de 8.
+  &::-webkit-scrollbar-thumb
+    background: var(--plane-n-700)
+    background-clip: padding-box
+    border: 3px solid transparent
+    border-radius: 999px
+
+    &:hover
+      background: var(--plane-n-900)
+      background-clip: padding-box
+
+  &::-webkit-scrollbar-corner
+    background: var(--plane-n-200)
+
+// ------------------------------- Barre de defilement horizontale, la notre
+//
+// Elle REMPLACE la barre horizontale du navigateur, qui est supprimee juste
+// au-dessus. Deux raisons de ne pas s'en remettre a la native :
+//   - sous Windows 11, les barres sont masquees par defaut : Chrome passe en
+//     surimpression, et elle s'efface des qu'on cesse de defiler ;
+//   - meme affichee, elle etait pale, haute de huit pixels utiles et collee
+//     au bord de la fenetre.
+// Sur une frise, le deplacement horizontal est la commande principale de la
+// page : elle ne peut pas dependre d'un reglage systeme.
+// La ZONE et le TRAIT sont dissocies.
+//
+// Un trait fin se lit mieux et n'alourdit pas le bas de la page, mais un
+// trait fin se vise mal : six pixels de cible, c'est penible a la souris et
+// impraticable au doigt. L'element fait donc 16 px de haut et reste
+// transparent — c'est la cible — tandis que la piste et le pouce sont
+// dessines sur 6 px, centres dedans.
+$hbar-zone: 16px
+$hbar-trait: 6px
+$hbar-decalage: ($hbar-zone - $hbar-trait) * .5
+
+.op-gantt--hbar
+  flex: 0 0 auto
+  position: relative
+  height: $hbar-zone
+  // .op-gantt n'a pas de marge basse : sans celle-ci la barre collerait au
+  // bord de la fenetre et deviendrait penible a viser.
+  margin: 2px 0 8px
+  cursor: pointer
+  touch-action: none
+
+  &[hidden]
+    display: none
+
+  // La piste : un filet, pas un bandeau.
+  &::before
+    content: ""
+    position: absolute
+    inset-inline: 0
+    top: $hbar-decalage
+    height: $hbar-trait
+    border-radius: 999px
+    background: var(--plane-n-400)
+
+  &:focus-visible
+    outline: 2px solid var(--plane-brand)
+    outline-offset: 2px
+    border-radius: 999px
+
+// Position verticale posee en dur plutot que par transform : le script
+// ecrit deja translateX() sur cet element, une translation verticale
+// ajoutee la ecraserait l'horizontale.
+.op-gantt--hbar-thumb
+  position: absolute
+  top: $hbar-decalage
+  left: 0
+  height: $hbar-trait
+  border-radius: 999px
+  background: var(--plane-n-800)
+  transition: background-color 120ms cubic-bezier(.2, .7, .3, 1)
+
+.op-gantt--hbar:hover .op-gantt--hbar-thumb
+  background: var(--plane-n-900)
+
+.op-gantt--hbar.-saisi .op-gantt--hbar-thumb
+  background: var(--plane-brand)
+
+// Deux colonnes : les noms, puis le temps. La colonne de temps porte sa
+// largeur reelle pour que le defilement horizontal ait du sens.
+//
+// position: relative sert d'ancrage a la couche de dependances, qui doit
+// se superposer SANS participer au flux de la grille.
+// La colonne de temps prend AU MOINS sa largeur naturelle (jours x largeur
+// de jour) et s'etire au-dela pour occuper la place disponible. Sans ce
+// minmax, une frise de 49 jours laissait 600px de vide a droite sur un
+// grand ecran.
+.op-gantt--canvas
+  position: relative
+  display: grid
+  grid-template-columns: var(--gantt-side) minmax(calc(var(--gantt-days) * var(--gantt-day-w)), 1fr)
+  align-content: start
+  min-width: min-content
+
+// ------------------------------------------------------ En-tete collant
+// Empilement de la frise, de bas en haut :
+//   1  couche des dependances
+//   2  barres et jalons
+//   3  colonne de gauche collante
+//   5  en-tete collant
+//   6  coin haut-gauche, a l'intersection des deux
+// Chaque niveau doit etre STRICTEMENT superieur au precedent : a valeur
+// egale c'est l'ordre du DOM qui tranche, et il joue ici contre nous.
+.op-gantt--header-side,
+.op-gantt--header-time
+  position: sticky
+  top: 0
+  z-index: 5
+  background: var(--plane-surface)
+  border-bottom: 1px solid var(--plane-n-400)
+
+// Le coin haut-gauche doit passer devant les deux axes collants.
+.op-gantt--header-side
+  position: sticky
+  left: 0
+  z-index: 6
+  border-right: 1px solid var(--plane-n-400)
+
+.op-gantt--months
+  display: grid
+  grid-template-columns: repeat(var(--gantt-days), minmax(var(--gantt-day-w), 1fr))
+
+.op-gantt--month
+  grid-column: span var(--span)
+  height: 26px
+  min-width: 0
+  display: flex
+  align-items: center
+  padding-inline: 10px
+  font-size: 12px
+  font-weight: 600
+  letter-spacing: -.01em
+  color: var(--plane-n-1200)
+  border-left: 1px solid var(--plane-n-400)
+  white-space: nowrap
+  overflow: hidden
+
+  &:first-child
+    border-left: 0
+
+.op-gantt--days
+  display: grid
+  grid-template-columns: repeat(var(--gantt-days), minmax(var(--gantt-day-w), 1fr))
+
+.op-gantt--day
+  height: 20px
+  display: flex
+  align-items: center
+  justify-content: center
+  font-size: 10px
+  letter-spacing: -.02em
+  color: var(--plane-n-900)
+  font-variant-numeric: tabular-nums
+  overflow: hidden
+
+  &.-weekend
+    background: color-mix(in oklab, var(--plane-n-300) 60%, transparent)
+
+  &.-today
+    background: color-mix(in oklab, var(--plane-brand) 16%, transparent)
+    color: var(--plane-brand)
+    font-weight: 700
+
+// ------------------------------------------------------ Colonne de gauche
+// La colonne de gauche est COLLANTE : le contenu de la zone de temps passe
+// dessous quand on defile. Elle doit donc etre au-dessus de lui.
+//
+// PIEGE PAYE ICI — elle etait a z-index: 2, exactement comme les barres et
+// les jalons. A z-index egal, c'est l'ordre du DOM qui tranche, et la zone
+// de temps vient APRES la colonne dans chaque ligne : les barres passaient
+// donc par-dessus les noms des lots des qu'on defilait horizontalement.
+// 3 la place au-dessus des barres (2) et sous l'en-tete colle (4).
+.op-gantt--group-side,
+.op-gantt--row-side
+  position: sticky
+  left: 0
+  z-index: 3
+  background: var(--plane-surface)
+  border-right: 1px solid var(--plane-n-400)
+
+.op-gantt--group-side
+  display: flex
+  align-items: center
+  gap: 8px
+  height: #{$group}
+  padding-inline: 12px
+  background: var(--plane-n-200)
+  border-bottom: 1px solid var(--plane-n-400)
+
+.op-gantt--group-time
+  height: #{$group}
+  background: var(--plane-n-200)
+  border-bottom: 1px solid var(--plane-n-400)
+
+.op-gantt--dot
+  width: 8px
+  height: 8px
+  flex: 0 0 auto
+  border-radius: 999px
+  background: var(--tint, var(--plane-n-700))
+
+.op-gantt--group-name
+  font-size: 12px
+  font-weight: 600
+  color: var(--plane-n-1200)
+
+.op-gantt--group-count
+  font-size: 11px
+  color: var(--plane-n-1000)
+  background: var(--plane-n-400)
+  padding: 0 6px
+  border-radius: 999px
+  font-variant-numeric: tabular-nums
+
+// Hauteur EXPLICITE, sinon la cellule vaut contenu + bordure et devient
+// plus haute d'un pixel que la cellule de temps. C'est elle qui impose
+// alors la hauteur de rangee, et le decalage s'accumule ligne apres
+// ligne : au quinzieme lot, les connecteurs de dependance sont quinze
+// pixels trop bas.
+.op-gantt--row-side
+  height: var(--gantt-row)
+  border-bottom: 1px solid color-mix(in oklab, var(--plane-n-400) 60%, transparent)
+
+.op-gantt--row-link
+  display: flex
+  align-items: center
+  gap: 8px
+  height: var(--gantt-row)
+  padding-inline: 12px
+  text-decoration: none
+  color: inherit
+
+  &:hover .op-gantt--row-name
+    color: var(--plane-brand)
+
+.op-gantt--row-id
+  flex: 0 0 auto
+  font-size: 11px
+  color: var(--plane-n-900)
+  font-variant-numeric: tabular-nums
+
+.op-gantt--row-name
+  flex: 1 1 auto
+  min-width: 0
+  font-size: 13px
+  color: var(--plane-n-1200)
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+
+// ------------------------------------------------------- Lignes de temps
+.op-gantt--row-time
+  position: relative
+  display: grid
+  grid-template-columns: repeat(var(--gantt-days), minmax(var(--gantt-day-w), 1fr))
+  align-items: center
+  height: var(--gantt-row)
+  border-bottom: 1px solid color-mix(in oklab, var(--plane-n-400) 60%, transparent)
+
+  // La trame des week-ends et le filet des semaines sont peints en fond :
+  // deux degrades repetes plutot que des centaines d'elements.
+  background-image: repeating-linear-gradient(to right, color-mix(in oklab, var(--plane-n-400) 55%, transparent) 0 1px, transparent 1px calc(var(--gantt-day-w) * 7))
+  background-position: left top
+
+  &:hover
+    background-color: color-mix(in oklab, var(--plane-n-200) 70%, transparent)
+
+// Le marqueur du jour : un trait par ligne, pose sur sa colonne.
+.op-gantt--today
+  grid-column: var(--at) / span 1
+  grid-row: 1
+  justify-self: start
+  width: 2px
+  height: 100%
+  background: var(--plane-brand)
+  opacity: .85
+  pointer-events: none
+
+// ------------------------------------------------------------ Les barres
+.op-gantt--bar
+  grid-column: var(--col) / span var(--span)
+  grid-row: 1
+  position: relative
+  z-index: 2
+  display: flex
+  align-items: center
+  text-decoration: none
+  height: 26px
+  // Une barre d'un seul jour reste visible meme quand le zoom la reduit a
+  // quelques pixels : sans plancher, elle disparaitrait.
+  min-width: 6px
+  padding-inline: 9px
+  border-radius: 7px
+  overflow: hidden
+  background: var(--bar-track)
+  color: var(--bar-ink)
+  cursor: pointer
+  transition: filter 140ms cubic-bezier(.2, .7, .3, 1)
+
+  // L'avancement est un FILET EN BAS de la barre, pas un remplissage
+  // pleine hauteur.
+  //
+  // Le remplissage plein passait sous le libelle : encre sur remplissage
+  // tombait entre 2,4 et 3,2:1 selon l'etat, soit tres en dessous des
+  // 4,5:1 exiges pour du texte de 11px. Le contraste encre/piste, lui,
+  // etait bon (7,9 a 9,6:1). En reduisant l'avancement a un filet de 4px,
+  // le libelle ne repose plus que sur la piste et redevient lisible, sans
+  // rien perdre de l'information.
+  &::before
+    content: ""
+    position: absolute
+    inset: auto auto 0 0
+    height: 4px
+    width: var(--done, 0%)
+    border-radius: 0 999px 999px 0
+    background: var(--bar-fill)
+
+  &:hover
+    filter: brightness(.96)
+
+// Le libellé vit DANS la barre, toujours, tronqué si besoin.
+//
+// Il a d'abord ete pose a cote des barres trop courtes, pour eviter les
+// « Crea… ». C'etait oublier que le nom complet figure deja dans la colonne
+// de gauche, sur la meme ligne : le libelle exterieur ne rajoutait aucune
+// information et couvrait la zone de temps de texte flottant.
+//
+// min-width: 0 est INDISPENSABLE. Un element de flexbox a min-width: auto,
+// c'est-a-dire la largeur de son contenu : sans cette remise a zero le
+// libelle refuse de retrecir, deborde, et se fait couper net par
+// l'overflow de la barre — sans jamais afficher de points de suspension.
+.op-gantt--bar-label
+  position: relative
+  min-width: 0
+  font-size: 11px
+  font-weight: 500
+  white-space: nowrap
+  overflow: hidden
+  text-overflow: ellipsis
+
+// Quatre etats temporels. Chacun : une piste, un remplissage, une encre.
+.op-gantt--bar,
+.op-gantt--milestone
+  &.-upcoming
+    --bar-track: #DDE3E8
+    --bar-fill: #B6C0C8
+    --bar-ink: #3A4248
+
+  &.-active
+    --bar-track: #CFE4F1
+    --bar-fill: #1B7FB8
+    --bar-ink: #123A52
+
+  &.-overdue
+    --bar-track: #F3DCD9
+    --bar-fill: #C4564A
+    --bar-ink: #5A211B
+
+  &.-closed
+    --bar-track: #E3EFE9
+    --bar-fill: #3E9E70
+    --bar-ink: #1E4634
+
+body[data-color-mode="dark"][data-dark-theme]
+  .op-gantt--bar,
+  .op-gantt--milestone
+    &.-upcoming
+      --bar-track: #262A2D
+      --bar-fill: #59646C
+      --bar-ink: #C9D1D6
+
+    &.-active
+      --bar-track: #16303F
+      --bar-fill: #3E9AD1
+      --bar-ink: #D5E9F5
+
+    &.-overdue
+      --bar-track: #341F1D
+      --bar-fill: #D4675A
+      --bar-ink: #F6DAD6
+
+    &.-closed
+      --bar-track: #142B22
+      --bar-fill: #46A87C
+      --bar-ink: #D5EEE1
+
+// Un jalon est un instant : un losange, pas une duree.
+.op-gantt--milestone
+  grid-column: var(--col) / span 1
+  grid-row: 1
+  position: relative
+  z-index: 2
+  justify-self: center
+  width: 16px
+  height: 16px
+  border-radius: 3px
+  transform: rotate(45deg)
+  background: var(--bar-fill)
+  transition: filter 140ms cubic-bezier(.2, .7, .3, 1)
+
+  &:hover
+    filter: brightness(.92)
+
+// ------------------------------------------------------- Dependances
+// Une seule surface SVG couvre la zone de temps, sous les barres mais
+// au-dessus de la trame. Elle ne capte pas la souris : les barres restent
+// cliquables au travers.
+// ERREUR A NE PAS REFAIRE : en tant qu'enfant direct de la grille, le SVG
+// devenait un ELEMENT DE GRILLE et poussait l'en-tete et les lignes hors
+// de vue. Une couche de superposition doit sortir du flux — position
+// absolue, ancree sur .op-gantt--canvas.
+.op-gantt--links
+  position: absolute
+  left: var(--gantt-side)
+  right: 0
+  top: var(--gantt-header-h)
+  // ATTENTION — `width: auto` NE CONVIENT PAS ICI.
+  // Un <svg> est un element REMPLACE : avec left, right et width: auto
+  // poses ensemble, la contrainte est sur-determinee et le navigateur
+  // retient la largeur INTRINSEQUE, celle du viewBox. La couche mesurait
+  // donc 56 px — un pixel par jour — et tous les connecteurs s'empilaient
+  // contre le bord gauche au lieu de suivre les barres. Largeur explicite
+  // obligatoire.
+  width: calc(100% - var(--gantt-side))
+  height: var(--h)
+  pointer-events: none
+  z-index: 1
+  overflow: visible
+
+.op-gantt--link
+  fill: none
+  stroke: var(--plane-n-900)
+  stroke-width: 1.5
+  stroke-linecap: round
+  stroke-linejoin: round
+
+  // Un blocage n'est pas un simple enchainement : il se signale.
+  &.-blocking
+    stroke: var(--plane-bar-overdue)
+    stroke-dasharray: 4 3
+
+.op-gantt--link-end
+  fill: var(--plane-n-900)
+
+  &.-blocking
+    fill: var(--plane-bar-overdue)
+
+// ---------------------------------------------------------------- Vide
+.op-gantt--empty
+  padding: 56px 24px
+  text-align: center
+  border: 1px dashed var(--plane-n-600)
+  border-radius: 10px
+
+.op-gantt--empty-title
+  margin: 0
+  font-size: 15px
+  font-weight: 600
+  color: var(--plane-n-1200)
+
+.op-gantt--empty-body
+  margin: 6px auto 0
+  max-width: 46ch
+  font-size: 13px
+  color: var(--plane-n-1000)

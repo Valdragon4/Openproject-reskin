@@ -1,0 +1,214 @@
+// Zone de contenu, facon Plane.
+//
+// La laterale porte le canvas ; le contenu est la surface blanche qui porte
+// l'attention. Ce fichier regle le rythme de cette surface : en-tete de page,
+// barre d'outils, tables, cartes, et les surfaces que le navigateur dessine
+// lui-meme (selection, curseur, ascenseurs, anneau de focus).
+//
+// Aucune regle ici ne masque, ne deplace ni ne desactive quoi que ce soit :
+// couleur, espacement, typographie, rayon, ombre et transition uniquement.
+
+$plane-ease: cubic-bezier(.2, .7, .3, 1)
+$plane-dur: 140ms
+
+// ------------------------------------------------------ Surface de contenu
+#content-wrapper,
+#content
+  background: var(--plane-surface)
+
+// ---------------------------------------------------------- En-tete de page
+// Plus d'air au-dessus d'un titre qu'en dessous : le titre appartient a ce
+// qui le suit, pas a ce qui le precede.
+.op-page-header,
+.toolbar-container
+  margin-block: 4px 12px
+
+.op-page-header--title,
+.toolbar-container h2,
+.title-container h2
+  letter-spacing: -.014em
+  text-wrap: balance
+  color: var(--plane-n-1200)
+
+// Fil d'Ariane : discret, il situe sans reclamer l'attention.
+.op-breadcrumb,
+#breadcrumb
+  font-size: 12px
+  color: var(--plane-n-1000)
+
+// ------------------------------------------------------------------ Tables
+.generic-table th,
+.generic-table--results-container th
+  background: var(--plane-surface)
+  border-bottom: 1px solid var(--plane-n-400)
+  color: var(--plane-n-1000)
+  font-weight: 500
+  font-size: .75rem
+  letter-spacing: .02em
+
+.generic-table td
+  border-bottom: 1px solid var(--plane-n-400)
+  font-size: .8125rem
+
+// Les chiffres s'alignent partout ou ils s'empilent en colonnes.
+.generic-table td,
+.generic-table th,
+.wp-table--cell-span,
+.budget-table,
+.cost-table
+  font-variant-numeric: tabular-nums
+  font-feature-settings: "tnum" 1
+
+.wp-table--row > td
+  transition: background-color $plane-dur $plane-ease
+
+.wp-table--row:hover > td,
+.generic-table tbody tr:hover > td
+  background: var(--plane-n-200)
+
+.wp-table--row.-checked > td,
+.generic-table tbody tr.-checked > td
+  background: var(--plane-brand-subtle)
+
+// L'identifiant est le repere le plus scanne de la table.
+.wp-table--id-link
+  font-variant-numeric: tabular-nums
+  font-weight: 500
+  color: var(--plane-n-1000)
+
+// ------------------------------------------------- Cartes, boites, widgets
+// Un filet, un rayon court, une ombre a peine posee — jamais les trois
+// devices empiles sur le meme bloc.
+.widget-box,
+.op-widget-box,
+.grid--widget
+  background: var(--plane-surface)
+  border: 1px solid var(--plane-n-400)
+  border-radius: 8px
+  box-shadow: 0 1px 2px -1px rgb(41 47 61 / .06), 0 1px 3px 0 rgb(41 47 61 / .05)
+
+// Une carte dans une carte ne prend pas une seconde ombre.
+.widget-box .widget-box,
+.grid--widget .widget-box
+  box-shadow: none
+  border: 0
+
+.op-modal,
+.spot-modal,
+dialog,
+.Overlay
+  border-radius: 8px
+  border: 1px solid var(--plane-n-400)
+  box-shadow: 0 8px 16px -4px rgb(41 47 61 / .08), 0 16px 32px -8px rgb(41 47 61 / .10)
+
+.dropdown-menu,
+.ng-dropdown-panel,
+.SelectMenu-modal,
+.ActionListWrap
+  border-radius: 6px
+  border: 1px solid var(--plane-n-400)
+  box-shadow: 0 2px 4px -1px rgb(41 47 61 / .04), 0 4px 6px -1px rgb(41 47 61 / .05)
+
+// Une liste d'actions posee DANS un panneau flottant n'a pas a se cadrer
+// elle-meme : le panneau porte deja la bordure et l'ombre. Sans cette
+// exception, le menu du bouton « + » dessinait deux cadres emboites.
+.Overlay .ActionListWrap
+  border: 0
+  box-shadow: none
+
+// Le corps du panneau est le conteneur qui defile. Deux consequences
+// visibles sur le menu du bouton « + » :
+//
+//   1. Son rayon etait nul. Un conteneur qui defile rogne son contenu : les
+//      angles redevenaient CARRES a l'interieur du cadre arrondi, et le menu
+//      paraissait carre alors que .Overlay porte bien ses 8 px.
+//   2. overflow-x: auto sur six pixels d'ecart suffisait a produire une
+//      barre de defilement HORIZONTALE. Un menu se dimensionne sur son
+//      contenu : il n'a jamais a defiler lateralement.
+.Overlay-body
+  border-radius: inherit
+  overflow-x: clip
+
+// ------------------------------------------------------------- Formulaires
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="url"],
+input[type="date"],
+textarea,
+select,
+.form--text-field,
+.form--select,
+.spot-text-field--input
+  border-radius: 6px
+  border-color: var(--plane-n-600)
+  transition: border-color $plane-dur $plane-ease, box-shadow $plane-dur $plane-ease
+
+button:disabled,
+.button:disabled,
+[aria-disabled="true"]
+  opacity: .5
+  cursor: not-allowed
+
+button:not(:disabled),
+.button:not(:disabled),
+summary
+  cursor: pointer
+
+// ------------------------------------------------- Surfaces du navigateur
+// Les parties qu'on n'a pas dessinees portent quand meme le design.
+::selection
+  background: var(--plane-brand-border)
+  color: var(--plane-n-1200)
+
+input,
+textarea,
+[contenteditable]
+  caret-color: var(--plane-brand)
+
+::placeholder
+  color: var(--plane-n-900)
+
+*
+  scrollbar-width: thin
+  scrollbar-color: var(--plane-n-700) transparent
+
+::-webkit-scrollbar
+  width: 10px
+  height: 10px
+
+::-webkit-scrollbar-track
+  background: transparent
+
+::-webkit-scrollbar-thumb
+  background: var(--plane-n-700)
+  border: 3px solid transparent
+  border-radius: 999px
+  background-clip: padding-box
+
+::-webkit-scrollbar-thumb:hover
+  background: var(--plane-n-800)
+  border: 3px solid transparent
+  background-clip: padding-box
+
+// Anneau de focus visible sur tout controle operable — WCAG 2.4.7.
+// :focus-visible seulement : la souris ne le declenche pas.
+\:focus-visible
+  outline: 2px solid var(--plane-brand)
+  outline-offset: 2px
+
+a
+  text-underline-offset: 2px
+
+// ------------------------------------------------------------- Mouvement
+// 140 ms, et rien qui ne traduise un changement d'etat.
+@media (prefers-reduced-motion: reduce)
+  *,
+  *::before,
+  *::after
+    transition-duration: 1ms !important
+    animation-duration: 1ms !important
+    animation-iteration-count: 1 !important
+    scroll-behavior: auto !important

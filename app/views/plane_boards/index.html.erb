@@ -1,0 +1,54 @@
+<%#
+  Index des tableaux, tous projets.
+
+  Le tableau lui-meme reste celui d'OpenProject : c'est un composant temps
+  reel avec glisser-deposer, le reecrire a moitie ferait perdre des
+  fonctions. Ce qui change, c'est qu'on voit enfin tous les tableaux d'un
+  coup, groupes par projet et typés.
+%>
+<% html_title "Tableaux" %>
+
+<div class="op-plane-page">
+  <%= render partial: "plane_shared/head",
+             locals: {
+               titre: "Tableaux",
+               sous_titre: "#{@total} #{@total > 1 ? 'tableaux' : 'tableau'} dans #{@groups.size} #{@groups.size > 1 ? 'projets' : 'projet'}",
+               origine_label: "Vue d'origine",
+               origine_path: "/boards"
+             } %>
+
+  <% if @groups.empty? %>
+    <div class="op-plane-empty">
+      <p class="op-plane-empty--title">Aucun tableau</p>
+      <p class="op-plane-empty--body">
+        Les tableaux se créent depuis un projet dont le module « Tableaux » est activé.
+      </p>
+    </div>
+  <% end %>
+
+  <% @groups.each do |project, boards| %>
+    <section class="op-plane-section">
+      <div class="op-plane-section--head">
+        <h2 class="op-plane-section--title"><%= project.name %></h2>
+        <span class="op-plane-section--count"><%= boards.size %></span>
+        <%= link_to "Ouvrir le projet", project_plane_home_path(project), class: "op-plane-section--more" %>
+      </div>
+
+      <ul class="op-plane-cards">
+        <% boards.each do |board| %>
+          <li>
+            <%= link_to project_work_package_board_path(project, board), class: "op-plane-card" do %>
+              <span class="op-plane-card--name"><%= board.name %></span>
+              <span class="op-plane-card--meta">
+                <%# board_type vaut :free pour un tableau libre, :action pour
+                    un tableau pilote par un attribut (statut, assigne…). %>
+                <span><%= board.board_type == :action ? "Tableau d'action" : "Tableau libre" %></span>
+                <span>· modifié le <%= format_date(board.updated_at) %></span>
+              </span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+</div>

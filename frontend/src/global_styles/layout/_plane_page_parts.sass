@@ -1,0 +1,156 @@
+// Elements propres a certaines pages reconstruites, poses sur la grammaire
+// commune de _plane_page.sass.
+
+// ------------------------------------------------ Etat courant d'un choix
+// Les selecteurs de periode et de semaine reutilisent le bouton secondaire :
+// il leur faut un etat « selectionne » qui ne repose pas que sur la couleur.
+.op-plane-page--secondary.-current
+  background: var(--plane-brand-subtle)
+  border-color: var(--plane-brand)
+  color: var(--plane-brand-active)
+  font-weight: 600
+
+// ------------------------------------------------------- Bloc repliable
+.op-plane-toggle
+  cursor: pointer
+  list-style: none
+  display: flex
+  align-items: center
+  gap: 8px
+  margin-bottom: 8px
+
+  &::-webkit-details-marker
+    display: none
+
+  &::before
+    content: ""
+    width: 9px
+    height: 9px
+    flex: 0 0 auto
+    background: currentColor
+    clip-path: polygon(30% 18%, 42% 6%, 82% 50%, 42% 94%, 30% 82%, 62% 50%)
+    transition: transform 140ms cubic-bezier(.2, .7, .3, 1)
+
+details[open] > .op-plane-toggle::before
+  transform: rotate(90deg)
+
+// ------------------------------------------------------- Mon temps
+.op-plane-time--day
+  margin-bottom: 10px
+
+.op-plane-time--day-head
+  display: flex
+  align-items: baseline
+  justify-content: space-between
+  gap: 10px
+  padding: 6px 2px
+  font-size: 12.5px
+
+.op-plane-time--day-name
+  display: flex
+  align-items: baseline
+  gap: 8px
+  font-weight: 600
+  color: var(--plane-n-1200)
+
+.op-plane-time--day-total
+  font-variant-numeric: tabular-nums
+  color: var(--plane-n-900)
+
+.op-plane-time--today
+  padding: 1px 7px
+  border-radius: 999px
+  background: var(--plane-brand-subtle)
+  border: 1px solid var(--plane-brand-border)
+  font-size: 10.5px
+  font-weight: 600
+  color: var(--plane-brand-active)
+
+// Un week-end vide est normal ; un jour ouvre vide, non. Les deux ne se
+// signalent donc pas de la meme facon — le second porte un liseré.
+.op-plane-time--day.-weekend .op-plane-time--day-name
+  font-weight: 500
+  color: var(--plane-n-900)
+
+.op-plane-time--day.-empty .op-plane-time--day-head
+  border-left: 2px solid #E9A23B
+  padding-left: 8px
+  border-radius: 2px
+
+// ------------------------------------------------------- Arbre du wiki
+.op-plane-tree
+  border: 1px solid var(--plane-n-500)
+  border-radius: 10px
+  background: var(--plane-surface)
+  padding: 6px 4px
+
+.op-plane-tree--root,
+.op-plane-tree--children
+  margin: 0
+  padding: 0
+  list-style: none
+
+// L'indentation est portee par une variable plutot que par des regles
+// imbriquees : la profondeur est inconnue a l'avance, le partial etant
+// recursif.
+.op-plane-tree--line
+  display: flex
+  align-items: center
+  gap: 8px
+  padding: 4px 10px
+  padding-inline-start: calc(10px + var(--profondeur, 0) * 16px)
+  border-radius: 6px
+
+  &:hover
+    background: var(--plane-canvas)
+
+// Le lien ne s'etire pas : le compteur d'enfants doit suivre le titre, pas
+// partir a l'autre bout de la colonne ou il ne se rattache plus a rien.
+.op-plane-tree--link
+  flex: 0 1 auto
+  min-width: 0
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+  font-size: 13px
+  color: var(--plane-n-1200)
+  text-decoration: none
+
+  &:hover
+    text-decoration: underline
+
+.op-plane-tree--count
+  flex: 0 0 auto
+  padding: 0 6px
+  border-radius: 999px
+  background: var(--plane-canvas)
+  border: 1px solid var(--plane-n-500)
+  font-size: 10.5px
+  color: var(--plane-n-900)
+
+// Filet vertical rattachant une branche a son parent.
+.op-plane-tree--children
+  border-left: 1px solid var(--plane-n-500)
+  margin-inline-start: 18px
+
+// --------------------------------------------- Barre de repartition
+// La barre se lit d'un coup d'oeil, le chiffre reste pour la precision.
+// Posee en fond du rang, sous le texte : pas d'element supplementaire a
+// aligner.
+.op-plane-bar
+  position: relative
+  justify-content: space-between
+
+  &::before
+    content: ""
+    position: absolute
+    inset-block: 4px
+    inset-inline-start: 0
+    width: var(--part, 0%)
+    background: var(--plane-brand-subtle)
+    border-inline-start: 2px solid var(--plane-brand)
+    border-radius: 0 4px 4px 0
+    pointer-events: none
+
+  > *
+    position: relative

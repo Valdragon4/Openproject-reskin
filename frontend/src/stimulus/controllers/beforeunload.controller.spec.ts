@@ -30,6 +30,14 @@ import { vi } from 'vitest';
 import { OpenProject } from 'core-app/core/setup/globals/openproject';
 import { BeforeunloadController } from './beforeunload.controller';
 
+// La modale maison est asynchrone : on la remplace par une promesse dont on
+// controle la reponse, sinon le test attendrait un clic reel.
+const planeConfirm = vi.hoisted(() => vi.fn());
+const turboVisit = vi.hoisted(() => vi.fn());
+
+vi.mock('core-turbo/plane-confirm', () => ({ planeConfirm }));
+vi.mock('@hotwired/turbo', () => ({ visit: turboVisit }));
+
 describe('BeforeunloadController', () => {
   let originalOpenProject:OpenProject;
   let controller:BeforeunloadController;
@@ -38,6 +46,8 @@ describe('BeforeunloadController', () => {
     originalOpenProject = window.OpenProject;
     window.OpenProject = new OpenProject();
     vi.stubGlobal('I18n', { t: vi.fn().mockReturnValue('Leave page?') });
+    planeConfirm.mockReset().mockResolvedValue(false);
+    turboVisit.mockReset();
     controller = Object.create(BeforeunloadController.prototype) as BeforeunloadController;
   });
 
@@ -60,54 +70,75 @@ describe('BeforeunloadController', () => {
     return event;
   }
 
-  it('shows confirm when Angular edit forms have unsaved changes', () => {
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
-
+  it('shows the in-app dialog when Angular edit forms have unsaved changes', () => {
     window.OpenProject.editFormsContainUnsavedChanges = () => true;
     const event = handle(turboBeforeVisit());
 
-    expect(confirm).toHaveBeenCalledWith('Leave page?');
+    expect(planeConfirm).toHaveBeenCalledWith({ message: 'Leave page?', danger: true });
+    // La visite est TOUJOURS annulee d'abord : le gestionnaire est synchrone,
+    // il ne peut pas attendre la reponse de la modale.
     expect(event.defaultPrevented).toBe(true);
   });
 
-  it('shows confirm when pageState is edited', () => {
+  it('shows the in-app dialog when pageState is edited', () => {
     window.OpenProject.pageState = 'edited';
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
 
     const event = handle(turboBeforeVisit());
 
-    expect(confirm).toHaveBeenCalledWith('Leave page?');
+    expect(planeConfirm).toHaveBeenCalled();
     expect(event.defaultPrevented).toBe(true);
   });
 
-  it('does not show confirm when nothing is dirty', () => {
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
-
+  it('does not show a dialog when nothing is dirty', () => {
     const event = handle(turboBeforeVisit());
 
-    expect(confirm).not.toHaveBeenCalled();
+    expect(planeConfirm).not.toHaveBeenCalled();
     expect(event.defaultPrevented).toBe(false);
   });
 
-  it('does not prevent navigation when user accepts confirm', () => {
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
-
+  it('replays the visit when the user confirms', async () => {
+    planeConfirm.mockResolvedValue(true);
     window.OpenProject.editFormsContainUnsavedChanges = () => true;
-    const event = handle(turboBeforeVisit());
 
-    expect(confirm).toHaveBeenCalledWith('Leave page?');
-    expect(event.defaultPrevented).toBe(false);
+    handle(turboBeforeVisit('http://example.com/roadmap'));
+    await vi.waitFor(() => expect(turboVisit).toHaveBeenCalled());
+
+    expect(turboVisit).toHaveBeenCalledWith('http://example.com/roadmap', { action: 'advance' });
   });
 
-  it('only checks pageWasEdited for native beforeunload', () => {
+  it('lets the replayed visit through without asking again', async () => {
+    planeConfirm.mockResolvedValue(true);
     window.OpenProject.editFormsContainUnsavedChanges = () => true;
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    handle(turboBeforeVisit('http://example.com/roadmap'));
+    await vi.waitFor(() => expect(turboVisit).toHaveBeenCalled());
+    planeConfirm.mockClear();
+
+    const replay = handle(turboBeforeVisit('http://example.com/roadmap'));
+
+    expect(planeConfirm).not.toHaveBeenCalled();
+    expect(replay.defaultPrevented).toBe(false);
+  });
+
+  it('does not ask on native beforeunload, only arms the browser dialog', () => {
+    window.OpenProject.editFormsContainUnsavedChanges = () => true;
     const event = new Event('beforeunload', { cancelable: true });
 
     handle(event);
 
-    expect(confirm).not.toHaveBeenCalled();
+    // pageWasEdited seul compte ici, et la boite reste celle du navigateur.
+    expect(planeConfirm).not.toHaveBeenCalled();
     expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('arms the native dialog when the page itself was edited', () => {
+    window.OpenProject.pageState = 'edited';
+    const event = new Event('beforeunload', { cancelable: true });
+
+    handle(event);
+
+    expect(planeConfirm).not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(true);
   });
 
   it('resets pageState to pristine on turbo:render', () => {

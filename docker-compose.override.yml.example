@@ -1,0 +1,19 @@
+# Ajustements locaux — ne pas committer en amont.
+#
+# La VM WSL2 de cette machine est plafonnee a 8 Go (voir C:\Users\...\.wslconfig,
+# plafond pose volontairement). Or le compose amont lance le serveur Angular
+# avec --max_old_space_size=8096, soit 8 Go de tas Node a lui seul, auxquels
+# s'ajoutent le backend Rails (~900 Mo), Postgres et memcached.
+#
+# Resultat : sous la charge d'une recompilation, le noyau tuait le conteneur
+# frontend (exit 137). Les assets cessaient d'etre servis, Angular ne
+# demarrait plus, et OpenProject laissait le contenu masque — la page
+# apparaissait blanche sans la moindre erreur applicative.
+#
+# 3 Go suffisent tres largement : le bundle principal fait 1,95 Mo et la
+# compilation incrementale tourne en une a deux secondes.
+services:
+  frontend:
+    command: "node --max_old_space_size=3072 ./node_modules/@angular/cli/bin/ng serve --host 0.0.0.0"
+    restart: unless-stopped
+    mem_limit: 3600m

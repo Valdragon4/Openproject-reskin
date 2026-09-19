@@ -29,20 +29,27 @@
 import { ChartOptions, TooltipModel } from 'chart.js';
 import { html, render } from 'lit-html';
 
+// Les graphiques suivent la meme voix typographique que le reste de
+// l'interface. 14px sur un axe est lourd pour de la donnee dense : Plane
+// descend a 12px et laisse la grille reculer.
 export const chartFont:ChartOptions['font'] = {
   family:
-    "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'",
-  size: 14,
+    "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'",
+  size: 12,
 };
 
+// Pastilles de legende plus courtes : 56x20 se lisait comme une barre de
+// donnees, pas comme un repere de serie.
 export const chartLegend:ChartOptions['plugins'] = {
   legend: {
     position: 'bottom',
     labels: {
-      boxWidth: 56,
-      boxHeight: 20,
-      padding: 16,
-      font: { size: 14 },
+      boxWidth: 12,
+      boxHeight: 12,
+      borderRadius: 3,
+      useBorderRadius: true,
+      padding: 14,
+      font: { size: 12 },
     },
   },
 };

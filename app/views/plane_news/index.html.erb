@@ -1,0 +1,56 @@
+<%#
+  Actualités : groupees par mois, provenance sur chaque ligne.
+
+  La liste d'origine ne disait pas de quel projet venait une annonce tant
+  qu'on n'avait pas clique. Sur une instance multi-projets, c'est
+  l'information la plus utile.
+%>
+<% html_title "Actualités" %>
+
+<div class="op-plane-page">
+  <%= render partial: "plane_shared/head",
+             locals: {
+               titre: "Actualités",
+               sous_titre: "#{@total} #{@total > 1 ? 'annonces' : 'annonce'}, la plus récente en premier",
+               origine_label: "Vue d'origine",
+               origine_path: "/news"
+             } %>
+
+  <% if @by_month.empty? %>
+    <div class="op-plane-empty">
+      <p class="op-plane-empty--title">Aucune actualité</p>
+      <p class="op-plane-empty--body">Les annonces publiées dans vos projets apparaîtront ici.</p>
+    </div>
+  <% end %>
+
+  <% @by_month.each do |mois, annonces| %>
+    <section class="op-plane-section">
+      <div class="op-plane-section--head">
+        <h2 class="op-plane-section--title"><%= l(mois, format: "%B %Y").capitalize %></h2>
+        <span class="op-plane-section--count"><%= annonces.size %></span>
+      </div>
+
+      <ul class="op-plane-list">
+        <% annonces.each do |item| %>
+          <li class="op-plane-list--row">
+            <%= link_to news_path(item), class: "op-plane-list--link" do %>
+              <span class="op-plane-list--sub">
+                <span class="op-plane-list--name"><%= item.title %></span>
+                <span class="op-plane-list--meta">
+                  <%= item.author&.name %>
+                  <% if item.summary.present? %> · <%= truncate(item.summary, length: 110) %><% end %>
+                </span>
+              </span>
+              <span class="op-plane-list--right">
+                <% if item.project %>
+                  <span class="op-plane-list--chip"><%= item.project.name %></span>
+                <% end %>
+                <span class="op-plane-list--date"><%= format_date(item.created_at) %></span>
+              </span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+</div>

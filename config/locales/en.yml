@@ -4865,6 +4865,16 @@ en:
     default: "-"
     templated_hint: Automatically generated through type %{type}
 
+  # Labels of the in-app confirmation dialog that replaces window.confirm().
+  # Served through the <body> data attributes, see
+  # ApplicationHelper#plane_confirm_labels.
+  plane_confirm:
+    title: "Please confirm"
+    danger_title: "Please confirm"
+    confirm: "Confirm"
+    danger_confirm: "Yes, continue"
+    cancel: "Cancel"
+
   plugin_openproject_auth_plugins:
     description: "Integration of OmniAuth strategy providers for authentication in OpenProject."
     name: "OpenProject Auth Plugins"
@@ -6424,6 +6434,15 @@ en:
       summary_with_more_html: Member of %{names} and %{count_link}.
     invite_user_modal:
       invite: "Invite"
+      # Several recipients can now be invited at once; these three cover the
+      # outcomes the single-recipient message cannot express.
+      plane_bulk:
+        label: "Or paste a list of email addresses"
+        caption: "Separate them with commas, semicolons or line breaks. They add to the people picked above."
+        invalid: "These entries are not valid email addresses: %{list}"
+      plane_none: "No invitation could be sent to %{project}."
+      plane_all: "%{count} people invited to %{project}."
+      plane_partial: "%{count} of %{total} invitations sent to %{project}. The others already are members, or could not be invited."
       message:
         description: "We will send an email to the user, to which you can add a personal message here. An explanation for the invitation could be useful, or perhaps a bit of information regarding the project to help them get started."
         label: "Invitation message"

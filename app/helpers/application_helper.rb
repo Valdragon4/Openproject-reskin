@@ -295,9 +295,27 @@ module ApplicationHelper
       overflowing_identifier: ".__overflowing_body",
       external_links_enabled_value: Setting.capture_external_links?,
       rendered_at: Time.zone.now.iso8601,
-      turbo: local_assigns[:turbo_opt_out] ? "false" : nil
+      turbo: local_assigns[:turbo_opt_out] ? "false" : nil,
+      plane_confirm: plane_confirm_labels
     }.merge(user_theme_data_attributes)
      .compact
+  end
+
+  # Libelles de la modale de confirmation de la refonte
+  # (frontend/src/turbo/plane-confirm.ts).
+  #
+  # Ils transitent par le <body> plutot que par I18n cote frontend : les cles
+  # js.* ne sont lisibles par le bundle qu'apres regeneration de
+  # frontend/src/locales/*.json, un artefact construit. Le serveur, lui,
+  # connait deja la langue de l'utilisateur et se recharge a chaud.
+  def plane_confirm_labels
+    {
+      title: I18n.t("plane_confirm.title"),
+      danger_title: I18n.t("plane_confirm.danger_title"),
+      confirm: I18n.t("plane_confirm.confirm"),
+      danger_confirm: I18n.t("plane_confirm.danger_confirm"),
+      cancel: I18n.t("plane_confirm.cancel")
+    }.to_json
   end
 
   def user_theme_data_attributes

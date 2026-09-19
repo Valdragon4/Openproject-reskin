@@ -342,6 +342,25 @@ module Redmine::MenuManager::MenuHelper
     end
   end
 
+  # Une entree dont la fonctionnalite Enterprise n'est pas activee encombre
+  # la colonne : on la voit, on clique, on tombe sur une page de vente. Sur
+  # une instance Community elles sont assez nombreuses pour noyer les
+  # destinations reelles.
+  #
+  # ON NE LES SUPPRIME PLUS POUR AUTANT.
+  # Une premiere version les retirait du menu de projet. C'etait une PERTE :
+  # « Planificateur d'equipe » et « Gestion des ressources » devenaient
+  # introuvables, y compris leur page de presentation, et il n'existe aucun
+  # autre chemin vers elles depuis un projet. « Masquer de la vue directe »
+  # et « rendre injoignable » ne sont pas la meme chose.
+  #
+  # Elles descendent donc dans une section « Enterprise » repliee, comme
+  # dans le menu global — PlaneNavHelper s'en charge. Ce predicat ne sert
+  # plus qu'a les RECONNAITRE pour les y ranger.
+  def enterprise_upsell_node?(node)
+    node.respond_to?(:enterprise_feature_missing?) && node.enterprise_feature_missing?
+  end
+
   # Checks if a user is allowed to access the menu item by:
   #
   # * Checking the conditions of the item

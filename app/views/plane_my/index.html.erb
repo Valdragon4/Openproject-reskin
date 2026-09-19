@@ -1,0 +1,78 @@
+<%#
+  Mon travail : quatre listes fixes, aucune configuration.
+
+  Elles sont ordonnees par ce qu'elles engagent — ce dont je suis
+  responsable, ce qui m'est assigne, ce que je pilote, ce que j'ai ouvert.
+%>
+<% html_title "Mon travail" %>
+
+<div class="op-plane-page">
+  <%= render partial: "plane_shared/head",
+             locals: {
+               titre: "Mon travail",
+               sous_titre: "#{@assigned.size} lots assignés · #{@late.size} en retard · #{number_with_precision(@week_hours, precision: 1, strip_insignificant_zeros: true)} h cette semaine",
+               origine_label: "Ma page",
+               origine_path: my_page_path
+             } %>
+
+  <% if @late.any? %>
+    <section class="op-plane-section">
+      <div class="op-plane-section--head">
+        <h2 class="op-plane-section--title">En retard</h2>
+        <span class="op-plane-section--count"><%= @late.size %></span>
+      </div>
+      <ul class="op-plane-list">
+        <%= render partial: "plane_shared/wp_row", collection: @late, as: :wp %>
+      </ul>
+    </section>
+  <% end %>
+
+  <section class="op-plane-section">
+    <div class="op-plane-section--head">
+      <h2 class="op-plane-section--title">Qui me sont assignés</h2>
+      <span class="op-plane-section--count"><%= @assigned.size %></span>
+    </div>
+    <% if @assigned.empty? %>
+      <div class="op-plane-empty">
+        <p class="op-plane-empty--title">Aucun lot assigné</p>
+        <p class="op-plane-empty--body">Rien ne vous attend pour le moment.</p>
+      </div>
+    <% else %>
+      <ul class="op-plane-list">
+        <%= render partial: "plane_shared/wp_row", collection: @assigned, as: :wp %>
+      </ul>
+    <% end %>
+  </section>
+
+  <div class="op-plane-split">
+    <% if @accountable.any? %>
+      <section class="op-plane-section">
+        <div class="op-plane-section--head">
+          <h2 class="op-plane-section--title">Dont je suis responsable</h2>
+          <span class="op-plane-section--count"><%= @accountable.size %></span>
+        </div>
+        <ul class="op-plane-list">
+          <%= render partial: "plane_shared/wp_row", collection: @accountable, as: :wp %>
+        </ul>
+      </section>
+    <% end %>
+
+    <section class="op-plane-section">
+      <div class="op-plane-section--head">
+        <h2 class="op-plane-section--title">Que j'ai ouverts</h2>
+        <span class="op-plane-section--count"><%= @authored.size %></span>
+        <%= link_to "Mon temps", plane_time_path, class: "op-plane-section--more" %>
+      </div>
+      <% if @authored.empty? %>
+        <div class="op-plane-empty">
+          <p class="op-plane-empty--title">Aucun lot ouvert par vous</p>
+          <p class="op-plane-empty--body">Les lots que vous créez apparaîtront ici.</p>
+        </div>
+      <% else %>
+        <ul class="op-plane-list">
+          <%= render partial: "plane_shared/wp_row", collection: @authored, as: :wp %>
+        </ul>
+      <% end %>
+    </section>
+  </div>
+</div>

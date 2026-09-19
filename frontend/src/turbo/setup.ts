@@ -42,9 +42,16 @@ import { StreamActions } from '@hotwired/turbo';
 import { addTurboAngularWrapper } from 'core-turbo/turbo-angular-wrapper';
 import { registerActionMenuMorphRemount } from './action-menu-morph-remount';
 import { registerPragmaticDndMorphAttributePreservation } from './pragmatic-dnd-morph-attributes';
+import { registerPlaneConfirm } from './plane-confirm';
 
 Turbo.session.drive = true;
 Turbo.config.drive.progressBarDelay = 100;
+
+// Avant Turbo.start() : la methode de confirmation est lue a chaque
+// declenchement, mais un data-turbo-confirm sur un lien present au premier
+// rendu peut partir tres tot. Poser l'accroche d'abord evite la fenetre
+// pendant laquelle la boite native reprendrait la main.
+registerPlaneConfirm();
 
 // Start turbo
 Turbo.start();

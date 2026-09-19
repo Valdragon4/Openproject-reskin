@@ -1,0 +1,299 @@
+// Grammaire commune aux pages reconstruites.
+//
+// Huit pages ont ete ajoutees d'un coup. Leur donner chacune sa feuille de
+// style aurait produit huit densites, huit tailles de titre et huit facons
+// d'afficher une date — c'est exactement le defaut qu'on reproche a la
+// version d'origine. Tout ce qui est partage vit donc ici, et chaque page
+// ne declare que ce qui lui est propre.
+
+.op-plane-page
+  padding: 20px 24px 48px
+  max-width: 1400px
+
+.op-plane-page--head
+  display: flex
+  align-items: flex-start
+  justify-content: space-between
+  gap: 16px
+  flex-wrap: wrap
+  margin-bottom: 18px
+
+.op-plane-page--title
+  margin: 0
+  font-size: 20px
+  font-weight: 600
+  line-height: 1.3
+  color: var(--plane-n-1200)
+
+.op-plane-page--subtitle
+  margin: 2px 0 0
+  font-size: 12.5px
+  color: var(--plane-n-900)
+
+.op-plane-page--tools
+  display: flex
+  align-items: center
+  gap: 8px
+  flex-wrap: wrap
+
+// Le lien vers la vue d'origine est present sur chaque page : la refonte
+// ajoute une lecture, elle ne confisque pas l'outil d'analyse.
+.op-plane-page--secondary,
+.op-plane-page--primary
+  padding: 6px 14px
+  border-radius: 8px
+  font-size: 12.5px
+  font-weight: 500
+  text-decoration: none
+  white-space: nowrap
+
+  &:hover
+    text-decoration: none
+
+.op-plane-page--secondary
+  border: 1px solid var(--plane-n-500)
+  color: var(--plane-n-900)
+
+  &:hover
+    background: var(--plane-canvas)
+    color: var(--plane-n-1200)
+
+.op-plane-page--primary
+  background: var(--plane-brand)
+  color: #fff
+
+  &:hover
+    background: var(--plane-brand-active)
+    color: #fff
+
+// ------------------------------------------------------------- Sections
+.op-plane-section
+  margin-top: 24px
+
+.op-plane-section--head
+  display: flex
+  align-items: baseline
+  gap: 8px
+  margin-bottom: 8px
+
+.op-plane-section--title
+  margin: 0
+  font-size: 11px
+  font-weight: 600
+  letter-spacing: .06em
+  text-transform: uppercase
+  color: var(--plane-n-900)
+
+.op-plane-section--count
+  padding: 1px 7px
+  border-radius: 999px
+  background: var(--plane-canvas)
+  border: 1px solid var(--plane-n-500)
+  font-size: 11px
+  color: var(--plane-n-900)
+
+.op-plane-section--more
+  margin-left: auto
+  font-size: 12px
+  color: var(--plane-n-900)
+  text-decoration: none
+
+  &:hover
+    color: var(--plane-n-1200)
+    text-decoration: underline
+
+// ---------------------------------------------------------------- Liste
+// Une ligne = un objet. Pas de colonnes : ce qu'on lit d'un coup d'oeil,
+// dans l'ordre ou on le lit.
+.op-plane-list
+  margin: 0
+  padding: 0
+  list-style: none
+  border: 1px solid var(--plane-n-500)
+  border-radius: 10px
+  overflow: hidden
+  background: var(--plane-surface)
+
+.op-plane-list--row + .op-plane-list--row
+  border-top: 1px solid var(--plane-n-400)
+
+.op-plane-list--link
+  display: flex
+  align-items: center
+  gap: 10px
+  min-height: 40px
+  padding: 8px 14px
+  text-decoration: none
+  color: inherit
+
+  &:hover
+    background: var(--plane-canvas)
+    text-decoration: none
+
+// Pastille de couleur (statut, type, etat) : la couleur situe, le texte dit.
+.op-plane-list--dot
+  flex: 0 0 auto
+  width: 8px
+  height: 8px
+  border-radius: 999px
+  background: var(--dot, var(--plane-n-700))
+
+.op-plane-list--id
+  flex: 0 0 auto
+  min-width: 34px
+  font-size: 12px
+  font-variant-numeric: tabular-nums
+  color: var(--plane-n-900)
+
+.op-plane-list--name
+  flex: 1 1 auto
+  min-width: 0
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+  font-size: 13.5px
+  color: var(--plane-n-1200)
+
+.op-plane-list--sub
+  flex: 1 1 auto
+  min-width: 0
+  display: flex
+  flex-direction: column
+  gap: 1px
+
+.op-plane-list--meta
+  font-size: 11.5px
+  color: var(--plane-n-900)
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+
+// Provenance : sur une page transverse, savoir de quel projet vient
+// l'element est la moitie de l'information.
+.op-plane-list--chip
+  flex: 0 0 auto
+  max-width: 190px
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+  padding: 1px 8px
+  border-radius: 999px
+  background: var(--plane-canvas)
+  border: 1px solid var(--plane-n-500)
+  font-size: 11px
+  color: var(--plane-n-900)
+
+.op-plane-list--date
+  flex: 0 0 auto
+  font-size: 11.5px
+  font-variant-numeric: tabular-nums
+  color: var(--plane-n-900)
+
+  &.-late
+    color: #8A1C1C
+    font-weight: 600
+
+.op-plane-list--right
+  flex: 0 0 auto
+  display: flex
+  align-items: center
+  gap: 8px
+
+// ---------------------------------------------------------------- Cartes
+.op-plane-cards
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(264px, 1fr))
+  gap: 12px
+  margin: 0
+  padding: 0
+  list-style: none
+
+.op-plane-card
+  display: flex
+  flex-direction: column
+  gap: 6px
+  padding: 14px
+  border: 1px solid var(--plane-n-500)
+  border-radius: 10px
+  background: var(--plane-surface)
+  text-decoration: none
+  color: inherit
+  transition: border-color 120ms cubic-bezier(.2, .7, .3, 1), box-shadow 120ms cubic-bezier(.2, .7, .3, 1)
+
+  &:hover
+    border-color: var(--plane-n-700)
+    box-shadow: 0 2px 8px rgba(16, 24, 40, .07)
+    text-decoration: none
+
+.op-plane-card--name
+  font-size: 14px
+  font-weight: 600
+  color: var(--plane-n-1200)
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+
+.op-plane-card--meta
+  display: flex
+  align-items: center
+  gap: 8px
+  flex-wrap: wrap
+  font-size: 11.5px
+  color: var(--plane-n-900)
+
+// -------------------------------------------------------- Chiffres cles
+.op-plane-stats
+  display: grid
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))
+  gap: 12px
+  margin: 0 0 4px
+  padding: 0
+  list-style: none
+
+.op-plane-stat
+  padding: 12px 14px
+  border: 1px solid var(--plane-n-500)
+  border-radius: 10px
+  background: var(--plane-surface)
+
+.op-plane-stat--value
+  display: block
+  font-size: 22px
+  font-weight: 600
+  line-height: 1.2
+  font-variant-numeric: tabular-nums
+  color: var(--plane-n-1200)
+
+.op-plane-stat--label
+  display: block
+  margin-top: 2px
+  font-size: 11.5px
+  color: var(--plane-n-900)
+
+// ----------------------------------------------------------------- Vide
+.op-plane-empty
+  padding: 28px 20px
+  text-align: center
+  border: 1px dashed var(--plane-n-500)
+  border-radius: 10px
+  background: var(--plane-surface)
+
+.op-plane-empty--title
+  margin: 0
+  font-size: 13.5px
+  font-weight: 600
+  color: var(--plane-n-1200)
+
+.op-plane-empty--body
+  margin: 4px 0 0
+  font-size: 12.5px
+  color: var(--plane-n-900)
+
+// ------------------------------------------------- Deux colonnes egales
+// Utilise par l'Accueil et Ma page : deux flux de lecture cote a cote sur
+// grand ecran, empiles des que la largeur ne suffit plus.
+.op-plane-split
+  display: grid
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr))
+  gap: 20px
+  align-items: start

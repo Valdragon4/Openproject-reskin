@@ -1,0 +1,145 @@
+<%#
+  Aperçu projet — page reconstruite.
+
+  Une seule question : ou en est ce projet ? La reponse descend du general
+  au particulier — chiffres, avancement, retards, repartition, equipe —
+  et chaque bloc gagne sa place en repondant a un morceau de la question.
+%>
+<%# Le gabarit ajoute deja le nom du projet : le repeter donnait
+    « Scrum project | Scrum project | OpenProject ». %>
+<% html_title "Aperçu" %>
+
+<div class="op-plane-ov">
+
+  <header class="op-plane-ov--head">
+    <div class="op-plane-ov--identity">
+      <h1 class="op-plane-ov--title"><%= @project.name %></h1>
+      <% if @project.description.present? %>
+        <p class="op-plane-ov--desc"><%= truncate(@project.description.to_s, length: 180) %></p>
+      <% end %>
+    </div>
+    <nav class="op-plane-ov--views" aria-label="Vues">
+      <span class="op-plane-ov--view is-current" aria-current="page">Aperçu</span>
+      <%= link_to "Travail", project_plane_work_path(@project), class: "op-plane-ov--view" %>
+      <%# Pointe vers la FRISE reconstruite, pas vers l'ancien Gantt : le
+          commutateur renvoyait a la page d'origine, et la nouvelle n'etait
+          atteignable que par la laterale. %>
+      <%= link_to "Frise", project_plane_gantt_path(@project), class: "op-plane-ov--view" %>
+    </nav>
+  </header>
+
+  <%# Une ligne de chiffres qui se lit en deux secondes. Le retard porte la
+      seule couleur de la rangee : c'est le seul chiffre qui appelle une action. %>
+  <section class="op-plane-ov--stats" aria-label="Chiffres clés">
+    <div class="op-plane-ov--stat">
+      <span class="op-plane-ov--stat-value"><%= @total %></span>
+      <span class="op-plane-ov--stat-label">Lots au total</span>
+    </div>
+    <div class="op-plane-ov--stat">
+      <span class="op-plane-ov--stat-value"><%= @open %></span>
+      <span class="op-plane-ov--stat-label">Ouverts</span>
+    </div>
+    <div class="op-plane-ov--stat <%= "-alert" if @overdue.positive? %>">
+      <span class="op-plane-ov--stat-value"><%= @overdue %></span>
+      <span class="op-plane-ov--stat-label">En retard</span>
+    </div>
+    <div class="op-plane-ov--stat">
+      <span class="op-plane-ov--stat-value"><%= @closed %></span>
+      <span class="op-plane-ov--stat-label">Terminés</span>
+    </div>
+  </section>
+
+  <section class="op-plane-ov--progress-block" aria-label="Avancement">
+    <div class="op-plane-ov--progress-head">
+      <span class="op-plane-ov--progress-label">Avancement</span>
+      <span class="op-plane-ov--progress-value"><%= @progress %> %</span>
+    </div>
+    <div class="op-plane-ov--progress"
+         role="progressbar"
+         aria-valuenow="<%= @progress %>"
+         aria-valuemin="0"
+         aria-valuemax="100"
+         aria-label="Avancement du projet">
+      <span class="op-plane-ov--progress-fill" style="--fill: <%= @progress %>%"></span>
+    </div>
+    <p class="op-plane-ov--progress-note">
+      <%= @closed %> lot<%= "s" if @closed > 1 %> terminé<%= "s" if @closed > 1 %> sur <%= @total %>
+    </p>
+  </section>
+
+  <div class="op-plane-ov--cols">
+
+    <%# Ce qui est en retard passe avant le reste : c'est la seule chose de
+        cette page sur laquelle on peut agir tout de suite. %>
+    <section class="op-plane-ov--panel">
+      <h2 class="op-plane-ov--panel-title">
+        En retard
+        <% if @overdue.positive? %><span class="op-plane-ov--badge -alert"><%= @overdue %></span><% end %>
+      </h2>
+
+      <% if @late.empty? %>
+        <p class="op-plane-ov--none">Aucun lot en retard. Rien ne demande d'attention immédiate.</p>
+      <% else %>
+        <ul class="op-plane-ov--list">
+          <% @late.each do |wp| %>
+            <li>
+              <%= link_to work_package_path(wp), class: "op-plane-ov--item" do %>
+                <span class="op-plane-ov--item-id"><%= wp.id %></span>
+                <span class="op-plane-ov--item-subject"><%= wp.subject %></span>
+                <span class="op-plane-ov--item-date"><%= format_date(wp.due_date) %></span>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </section>
+
+    <%# Repartition en proportions : une barre segmentee dit mieux qu'un
+        camembert ce qui pese quoi, et se lit sans legende. %>
+    <section class="op-plane-ov--panel">
+      <h2 class="op-plane-ov--panel-title">Répartition par statut</h2>
+
+      <% if @total.positive? %>
+        <div class="op-plane-ov--bar" aria-hidden="true">
+          <% @by_status.each do |status, count| %>
+            <span class="op-plane-ov--bar-seg"
+                  style="--seg: <%= (count.to_f / @total * 100).round(2) %>%; --tint: <%= status&.color&.hexcode || "#94A3AE" %>"
+                  title="<%= status&.name %> : <%= count %>"></span>
+          <% end %>
+        </div>
+
+        <ul class="op-plane-ov--legend">
+          <% @by_status.each do |status, count| %>
+            <li class="op-plane-ov--legend-row">
+              <span class="op-plane-ov--dot" style="--tint: <%= status&.color&.hexcode || "#94A3AE" %>"></span>
+              <span class="op-plane-ov--legend-name"><%= status&.name || "Sans statut" %></span>
+              <span class="op-plane-ov--legend-count"><%= count %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="op-plane-ov--none">Aucun lot de travaux pour l'instant.</p>
+      <% end %>
+    </section>
+  </div>
+
+  <section class="op-plane-ov--panel">
+    <h2 class="op-plane-ov--panel-title">
+      Équipe
+      <span class="op-plane-ov--badge"><%= @members.size %></span>
+    </h2>
+
+    <% if @members.empty? %>
+      <p class="op-plane-ov--none">Aucun membre pour l'instant.</p>
+    <% else %>
+      <ul class="op-plane-ov--people">
+        <% @members.each do |user| %>
+          <li class="op-plane-ov--person">
+            <%= avatar(user, size: :mini) %>
+            <span class="op-plane-ov--person-name"><%= user.name %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>
+</div>

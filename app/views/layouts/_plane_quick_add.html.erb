@@ -1,0 +1,61 @@
+<%#
+  Menu « + » — reconstruit a plat.
+
+  POURQUOI NE PAS GARDER Primer::Alpha::ActionMenu
+  Le composant empile trois niveaux par entree :
+  ActionListItem > ActionListContent > ActionListItem-label. Plusieurs de ces
+  niveaux recoivent une surface au survol, avec des retraits differents : on
+  voyait donc DEUX surbrillances emboitees sur une meme ligne, l'une a
+  gauche, l'autre au centre. Retirer l'une d'elles au cas par cas revenait a
+  lutter contre le composant a chaque mise a jour.
+
+  Ici, une entree = UN element cliquable, une seule surface. Le declencheur
+  est un <summary> : l'ouverture et la fermeture au clavier viennent du
+  navigateur, sans etat a gerer.
+
+  Les DESTINATIONS ne changent pas : on reprend les memes items de menu que
+  le composant d'origine (:quick_add_menu) et la meme liste de types de lots.
+  Les attributs html des items sont propages tels quels — « Inviter
+  utilisateur » ouvre sa boite de dialogue via data-turbo-stream, la perdre
+  casserait l'invitation.
+%>
+<details class="op-plane-add" data-plane-dismiss>
+  <summary class="op-plane-add--trigger" title="<%= t('menus.quick_add.label') %>">
+    <%= render(Primer::Beta::Octicon.new(icon: :plus, classes: "op-plane-add--plus")) %>
+    <span class="op-plane-add--caret" aria-hidden="true"></span>
+    <span class="sr-only"><%= t("menus.quick_add.label") %></span>
+  </summary>
+
+  <div class="op-plane-add--panel" role="menu">
+    <% items.each do |item| %>
+      <% opts = item.html_options || {} %>
+      <%= link_to(item.url.present? ? allowed_node_url(item, @project) : "#",
+                  class: "op-plane-add--item",
+                  role: "menuitem",
+                  target: opts[:target],
+                  data: opts[:data],
+                  aria: opts[:aria]) do %>
+        <% if item.icon.present? %>
+          <%= render(Primer::Beta::Octicon.new(icon: item.icon, classes: "op-plane-add--icon")) %>
+        <% end %>
+        <span class="op-plane-add--label"><%= item.caption %></span>
+      <% end %>
+    <% end %>
+
+    <% if wp_items.any? %>
+      <div class="op-plane-add--sep" role="separator"></div>
+      <div class="op-plane-add--heading"><%= t(:label_work_package_plural) %></div>
+
+      <% wp_items.each do |wp_item| %>
+        <%# La classe portee par l'item colore le libelle a la couleur du
+            type : c'est elle qui distingue TASK de BUG d'un coup d'oeil. %>
+        <%= link_to wp_item[:href],
+                    class: "op-plane-add--item op-plane-add--item_type",
+                    role: "menuitem",
+                    target: "_top" do %>
+          <span class="op-plane-add--label <%= wp_item[:classes] %>"><%= wp_item[:caption] %></span>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+</details>

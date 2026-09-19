@@ -1,0 +1,36 @@
+<%#
+  Navigation GLOBALE (hors projet) — meme grammaire que la navigation de
+  projet : sections thematiques, une entree par ligne, sous-arbres
+  depliables.
+
+  Les trois pages reconstruites ouvrent la colonne, en portee globale
+  (PlaneScope). Les vues d'origine descendent dans un bloc replie : elles
+  gardent des capacites que la refonte n'a pas, on ne les supprime pas.
+
+  Les blocs replies le sont plutot que masques : « Enterprise » reste
+  consultable sans licence (seule la creation est bridee), et retirer ces
+  entrees rendrait du contenu gratuit introuvable.
+%>
+<nav class="op-nav" aria-label="<%= t(:label_main_menu) %>">
+  <% plane_global_sections.each do |label, nodes| %>
+    <% replie = PlaneNavHelper::PLANE_GLOBAL_FOLDED.include?(label) %>
+
+    <% if replie %>
+      <details class="op-nav--section op-nav--section_legacy">
+        <summary class="op-nav--label op-nav--label_toggle"><span><%= label %></span></summary>
+        <ul class="op-nav--list">
+          <%= render partial: "layouts/plane_nav_item", collection: nodes, as: :node %>
+        </ul>
+      </details>
+    <% else %>
+      <div class="op-nav--section">
+        <% if label.present? %>
+          <div class="op-nav--label"><%= label %></div>
+        <% end %>
+        <ul class="op-nav--list">
+          <%= render partial: "layouts/plane_nav_item", collection: nodes, as: :node %>
+        </ul>
+      </div>
+    <% end %>
+  <% end %>
+</nav>

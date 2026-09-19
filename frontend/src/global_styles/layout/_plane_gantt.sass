@@ -1,0 +1,239 @@
+// Diagramme de Gantt — refonte.
+//
+// Le Gantt d'OpenProject coloriait chaque barre selon son TYPE, avec les
+// teintes saturees stockees en base. Une frise de vingt lignes devenait un
+// nuancier : l'oeil ne pouvait plus lire ce qu'un Gantt sert a lire, c'est
+// a dire QUAND et OU EN EST chaque chose.
+//
+// Ici la couleur ne dit plus qu'une chose : l'avancement. Une palette unique
+// et sourde, quatre etats, et la portion accomplie remplie a l'interieur de
+// la barre. Le type reste dans sa colonne et dans l'infobulle.
+//
+// Les classes -plane-* sont posees par timeline-cell-renderer.ts.
+
+// ------------------------------------------------------------ La palette
+// Quatre teintes, une par etat temporel. Chacune a une version pleine (la
+// barre) et une version sourde (la piste), pour que la portion accomplie se
+// lise a l'interieur de la meme couleur plutot que contre une autre.
+body[data-color-mode][data-light-theme],
+body[data-color-mode][data-dark-theme]
+  --plane-bar-height: 18px
+
+  --plane-bar-upcoming:       #94A3AE
+  --plane-bar-upcoming-track: #DDE3E8
+  --plane-bar-active:         #1B7FB8
+  --plane-bar-active-track:   #CFE4F1
+  --plane-bar-closed:         #3E9E70
+  --plane-bar-closed-track:   #D8ECE2
+  --plane-bar-overdue:        #C4564A
+  --plane-bar-overdue-track:  #F3DCD9
+
+body[data-color-mode="dark"][data-dark-theme]
+  --plane-bar-upcoming:       #6B7780
+  --plane-bar-upcoming-track: #2A2E31
+  --plane-bar-active:         #3E9AD1
+  --plane-bar-active-track:   #16303F
+  --plane-bar-closed:         #46A87C
+  --plane-bar-closed-track:   #142B22
+  --plane-bar-overdue:        #D4675A
+  --plane-bar-overdue-track:  #341F1D
+
+// --------------------------------------------------------------- La barre
+// Une pilule pleine, sans contour. La piste porte la duree, le remplissage
+// porte l'avancement : deux informations, une seule forme.
+.timeline-element.bar
+  height: var(--plane-bar-height)
+  border-radius: 999px
+
+  .bar-label
+    padding-inline: 8px
+    font-size: 11px
+    font-weight: 500
+    line-height: var(--plane-bar-height)
+
+  .leftHandle,
+  .rightHandle
+    border-radius: 999px
+
+// La barre est PLEINE dans sa teinte d'etat — c'est elle qu'on lit, pas une
+// piste vide. Quand un avancement est saisi, une portion plus dense la
+// remplit par la gauche ; sinon la barre reste unie, sans zone creuse qui
+// suggererait une donnee manquante.
+//
+// La classe est posee sur la barre comme sur le losange d'un jalon, d'ou le
+// ciblage sur .op-plane-bar plutot que sur .timeline-element--bg.
+// ATTENTION : le moteur appelle applyTypeColor sur QUATRE elements — le
+// conteneur, la barre, le losange d'un jalon et l'etiquette centrale. Tous
+// portent donc .op-plane-bar. Seuls les deux premiers doivent etre remplis :
+// peindre l'etiquette lui collerait un fond colore derriere son texte.
+.timeline-element--bg.op-plane-bar,
+.timeline-element.milestone .diamond.op-plane-bar
+  border: 0
+  background-color: var(--plane-bar-color, var(--plane-n-800))
+  background-image: linear-gradient(to right, var(--plane-bar-strong) var(--plane-progress, 0%), transparent 0)
+  transition: background-color 140ms cubic-bezier(.2, .7, .3, 1)
+
+.timeline-element--bg.op-plane-bar
+  border-radius: 999px
+
+// L'etiquette ne porte que du texte.
+.bar-label.op-plane-bar
+  background: none
+
+// Les quatre etats temporels. --plane-bar-strong est derive de la teinte :
+// une seule valeur a maintenir par etat.
+.op-plane-bar.-plane-upcoming
+  --plane-bar-color: var(--plane-bar-upcoming)
+  --plane-bar-strong: color-mix(in oklab, var(--plane-bar-upcoming), black 22%)
+
+.op-plane-bar.-plane-active
+  --plane-bar-color: var(--plane-bar-active)
+  --plane-bar-strong: color-mix(in oklab, var(--plane-bar-active), black 22%)
+
+.op-plane-bar.-plane-overdue
+  --plane-bar-color: var(--plane-bar-overdue)
+  --plane-bar-strong: color-mix(in oklab, var(--plane-bar-overdue), black 22%)
+
+// Ce qui est termine recule : meme forme, meme place, moins de presence.
+// Un contour plein plutot qu'un aplat — l'objet est encore la, il ne
+// reclame plus rien.
+.op-plane-bar.-plane-closed
+  --plane-bar-color: var(--plane-bar-closed-track)
+  --plane-bar-strong: var(--plane-bar-closed)
+  background-image: none
+  box-shadow: inset 0 0 0 1.5px var(--plane-bar-closed)
+
+// Barre de duree des enfants : une trace, pas un second objet plein.
+.children-duration-bar
+  border-radius: 999px
+  background: var(--plane-n-500)
+  opacity: .8
+
+// ---------------------------------------------------------------- Jalons
+// Le losange reste — c'est la convention du Gantt et la seule forme qui
+// distingue un instant d'une duree — mais il adopte la teinte d'etat et
+// perd son contour.
+// Le losange porte les memes classes d'etat que les barres, donc la teinte
+// suit toute seule. Il perd son contour et adoucit ses angles.
+.timeline-element.milestone .diamond.op-plane-bar
+  border: 0
+  border-radius: 2px
+  background-image: none
+
+// ---------------------------------------------------------------- Grille
+// Un trait par JOUR dressait un rideau vertical derriere les barres. La
+// grille doit situer, pas quadriller : les traits ordinaires s'effacent
+// presque completement, seules les limites marquees (semaine, mois)
+// gardent de quoi se voir.
+.wp-timeline--grid-element
+  border-right: 1px solid color-mix(in oklab, var(--plane-n-400) 45%, transparent)
+
+  &_highlight
+    border-right: 1px solid var(--plane-n-500)
+
+// Les jours non travailles : une teinte a peine posee, pas une bande.
+.wp-timeline--non-working-day
+  background-color: color-mix(in oklab, var(--plane-n-300) 55%, transparent)
+
+// ----------------------------------------------------------- Ligne du jour
+// Un trait plein a la couleur de marque. Le rouge est reserve au retard.
+#wp-timeline-static-element-today-line
+  border-left: 2px solid var(--plane-brand)
+  border-right: 0
+  opacity: 1
+
+// --------------------------------------------------------------- En-tete
+// Trois rangees empilees — mois, numero de semaine, lettre du jour — a la
+// meme intensite, c'etait illisible. On etablit une hierarchie : le mois
+// porte la lecture, la semaine situe, le jour s'efface presque.
+.wp-timeline--header-element
+  background: var(--plane-surface)
+  border-right: 1px solid color-mix(in oklab, var(--plane-n-400) 50%, transparent)
+  font-size: 10px
+  color: var(--plane-n-900)
+  letter-spacing: .01em
+
+  &.-top-border
+    border-top: 1px solid var(--plane-n-400)
+
+// Le mois : la seule rangee qui se lit de loin.
+.wp-timeline--header-top-bold-element
+  border-top: 1px solid var(--plane-n-400)
+  font-size: 12px
+  font-weight: 600
+  letter-spacing: -.01em
+  color: var(--plane-n-1200)
+
+.wp-timeline--header-middle-element
+  border-bottom: 1px solid var(--plane-n-400)
+  border-top-color: color-mix(in oklab, var(--plane-n-400) 50%, transparent)
+  font-size: 10px
+  color: var(--plane-n-1000)
+
+// La lettre du jour n'est utile qu'au zoom le plus fin : elle recule au
+// maximum sans disparaitre.
+.wp-timeline--header-day-element
+  border-bottom: 1px solid var(--plane-n-400)
+  border-top-color: transparent
+  font-size: 9px
+  color: var(--plane-n-800)
+
+.wp-table-timeline--body
+  outline: 1px solid var(--plane-n-400)
+
+// ------------------------------------------------------------- Etiquettes
+//
+// LE VRAI DEFAUT DU GANTT D'ORIGINE : il affiche tout en double.
+// Le sujet vit dans la colonne SUJET *et* en italique a droite de chaque
+// barre. Les dates vivent dans leurs colonnes *et* de part et d'autre des
+// barres. Sur une frise un peu remplie, ces etiquettes se chevauchent,
+// mordent sur le tableau et rendent la colonne SUJET illisible.
+//
+// On retire les etiquettes PERMANENTES. Rien n'est perdu : les memes
+// informations sont dans les colonnes, et OpenProject fournit deja des
+// etiquettes de survol (show-on-hover) qui restent actives. La frise
+// redevient ce qu'elle doit etre — des barres sur un axe de temps.
+// OpenProject les pose en .timeline-element .labelLeft.not-empty, soit
+// (0,3,0) : une regle en (0,2,0) ne pouvait pas passer devant.
+.timeline-element .labelLeft.hide-on-hover,
+.timeline-element .labelRight.hide-on-hover,
+.timeline-element .labelFarRight.hide-on-hover,
+.timeline-element .hide-on-hover.not-empty
+  display: none
+
+// Les etiquettes de survol, elles, gagnent en lisibilite.
+.timeline-element .show-on-hover
+  font-size: 11px
+  font-weight: 500
+  color: var(--plane-n-1100)
+  font-variant-numeric: tabular-nums
+  background: var(--plane-surface)
+  padding-inline: 4px
+  border-radius: 3px
+
+// ------------------------------------------------------------ Respiration
+// 34px de ligne pour une barre de 18px etouffait la frise. La hauteur est
+// portee par un token partage avec le tableau : les deux cotes doivent
+// rester alignes ligne a ligne.
+//
+// Et surtout : sur un Gantt, le sujet est LE TEMPS. Le partage par defaut
+// donnait la moitie de la largeur a un tableau de colonnes dont la frise
+// repete deja l'essentiel. On le bascule en faveur de l'axe temporel.
+body[data-color-mode][data-light-theme],
+body[data-color-mode][data-dark-theme]
+  --table-timeline--row-height: 40px
+  --gantt-split-width: 62%
+
+// Le separateur entre tableau et frise etait un trait de 3px : un filet
+// suffit a dire « deux zones », sans creuser une tranchee.
+.work-packages-tabletimeline--timeline-side
+  border-left: 1px solid var(--plane-n-400)
+
+// ------------------------------------------------------------- Relations
+// Les liens de dependance etaient peints en `blue` — le mot-cle CSS brut,
+// a pleine saturation. Ils traversaient la frise plus visiblement que les
+// barres qu'ils relient. Un lien est un fond de plan : il indique une
+// contrainte, il ne la crie pas.
+.timeline-element.relation-line
+  background-color: var(--plane-n-700)
+  opacity: .75

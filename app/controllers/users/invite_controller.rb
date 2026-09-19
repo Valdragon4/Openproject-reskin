@@ -83,16 +83,21 @@ class Users::InviteController < ApplicationController
     end
   end
 
-  def create_invitation # rubocop:disable Metrics/AbcSize
-    call = create_member_call
+  # Le formulaire accepte plusieurs destinataires : on invite chacun, puis on
+  # rend compte de l'ENSEMBLE.
+  #
+  # Un echec n'annule pas les autres — une personne deja membre du projet ne
+  # doit pas empecher les cinq suivantes d'entrer. La boite ne se ferme que
+  # si tout est passe ; sinon elle reste ouverte, pour qu'on sache reprendre.
+  def create_invitation
+    calls = form_model.invitees.map { |invitee| create_member_call(invitee) }
+    reussies = calls.select { |call| call&.success? }
 
-    if call.success?
-      render_success_flash_message_via_turbo_stream(
-        message: I18n.t("users.invite_user_modal.success_message.#{form_model.principal_type.underscore}",
-                        project: form_model.project.name)
-      )
+    render_invitation_flash(reussies.size, calls.size)
+
+    if calls.any? && reussies.size == calls.size
       close_dialog_via_turbo_stream("##{Users::Invitation::DialogComponent::DIALOG_ID}",
-                                    additional: { user_id: call.result.user_id })
+                                    additional: { user_id: reussies.first.result.user_id })
     else
       replace_via_turbo_stream(component: Users::Invitation::PrincipalStep::FormComponent.new(form_model))
     end
@@ -100,23 +105,44 @@ class Users::InviteController < ApplicationController
     respond_with_turbo_streams
   end
 
-  def create_member_call
-    # The form validation worked, now is the time to invite the user
-    invite_user!
+  def render_invitation_flash(reussies, total)
+    projet = form_model.project.name
+
+    if reussies.zero?
+      render_error_flash_message_via_turbo_stream(
+        message: I18n.t("users.invite_user_modal.plane_none", project: projet)
+      )
+    elsif reussies == total && total == 1
+      render_success_flash_message_via_turbo_stream(
+        message: I18n.t("users.invite_user_modal.success_message.#{form_model.principal_type.underscore}",
+                        project: projet)
+      )
+    elsif reussies == total
+      render_success_flash_message_via_turbo_stream(
+        message: I18n.t("users.invite_user_modal.plane_all", count: total, project: projet)
+      )
+    else
+      render_error_flash_message_via_turbo_stream(
+        message: I18n.t("users.invite_user_modal.plane_partial", count: reussies, total:, project: projet)
+      )
+    end
+  end
+
+  # Une adresse inconnue cree un compte invite, un identifiant existant est
+  # repris tel quel. invite_new_user renvoie nil quand ni l'un ni l'autre
+  # n'aboutit : on ne cree alors aucune adhesion.
+  def create_member_call(invitee)
+    principal_id = invite_new_user(invitee, send_notification: true)
+    return if principal_id.blank?
 
     Members::CreateService
       .new(user: current_user)
       .call(
         project_id: form_model.project_id,
-        user_id: form_model.id_or_email,
+        user_id: principal_id,
         role_ids: [form_model.role_id],
         notification_message: form_model.message
       )
-  end
-
-  def invite_user!
-    # Invite new user by email if needed, or use existing user ID
-    form_model.id_or_email = invite_new_user(form_model.id_or_email, send_notification: true)
   end
 
   def validation_context

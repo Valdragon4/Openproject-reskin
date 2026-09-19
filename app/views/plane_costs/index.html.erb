@@ -1,0 +1,73 @@
+<%#
+  Temps et coûts : la réponse immédiate, pas le générateur de rapports.
+
+  Trois répartitions — projet, personne, activité — sur une période qu'on
+  change d'un clic. Le générateur d'origine reste accessible pour tout ce
+  qui demande un groupement libre, des colonnes ou un export.
+%>
+<% html_title "Temps et coûts" %>
+
+<div class="op-plane-page">
+  <%= render partial: "plane_shared/head",
+             locals: {
+               titre: "Temps et coûts",
+               sous_titre: "Du #{l(@depuis, format: '%-d %B %Y')} à aujourd'hui",
+               origine_label: "Rapports détaillés",
+               origine_path: "/cost_reports",
+               actions: capture {
+                 PlaneCostsController::PERIODES.each_key do |p|
+                   concat link_to("#{p} jours",
+                                  plane_costs_path(periode: p),
+                                  class: "op-plane-page--secondary#{' -current' if p == @periode}",
+                                  "aria-current": (p == @periode ? "page" : nil))
+                 end
+               }
+             } %>
+
+  <ul class="op-plane-stats">
+    <li class="op-plane-stat">
+      <span class="op-plane-stat--value"><%= number_with_precision(@total, precision: 1, strip_insignificant_zeros: true) %> h</span>
+      <span class="op-plane-stat--label">total enregistré</span>
+    </li>
+    <li class="op-plane-stat">
+      <span class="op-plane-stat--value"><%= @entries_count %></span>
+      <span class="op-plane-stat--label">saisies</span>
+    </li>
+    <li class="op-plane-stat">
+      <span class="op-plane-stat--value"><%= @by_project.size %></span>
+      <span class="op-plane-stat--label">projets</span>
+    </li>
+    <li class="op-plane-stat">
+      <span class="op-plane-stat--value"><%= @by_user.size %></span>
+      <span class="op-plane-stat--label">contributeurs</span>
+    </li>
+  </ul>
+
+  <% if @entries_count.zero? %>
+    <div class="op-plane-empty">
+      <p class="op-plane-empty--title">Aucun temps enregistré sur la période</p>
+      <p class="op-plane-empty--body">Élargissez la période, ou enregistrez du temps depuis un lot de travaux.</p>
+    </div>
+  <% else %>
+    <div class="op-plane-split">
+      <%# Une barre proportionnelle en plus du chiffre : la comparaison se
+          fait a l'oeil, le chiffre reste la pour la precision. %>
+      <% [["Par projet", @by_project], ["Par personne", @by_user], ["Par activité", @by_activity]].each do |titre, donnees| %>
+        <section class="op-plane-section">
+          <h2 class="op-plane-section--title"><%= titre %></h2>
+          <ul class="op-plane-list">
+            <% max = donnees.map(&:last).max || 1 %>
+            <% donnees.each do |nom, heures| %>
+              <li class="op-plane-list--row">
+                <span class="op-plane-list--link op-plane-bar" style="--part: <%= (heures / max * 100).round(1) %>%">
+                  <span class="op-plane-list--name"><%= nom %></span>
+                  <span class="op-plane-list--date"><%= number_with_precision(heures, precision: 1, strip_insignificant_zeros: true) %> h</span>
+                </span>
+              </li>
+            <% end %>
+          </ul>
+        </section>
+      <% end %>
+    </div>
+  <% end %>
+</div>

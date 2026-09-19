@@ -1,0 +1,111 @@
+<%#
+  Vue « Travail » — page reconstruite.
+
+  Organisation : une section repliable par statut, un compteur, des lignes
+  compactes, une action de creation au pied de chaque groupe. Pas de
+  colonnes : chaque ligne porte ce qu'on lit d'un coup d'oeil, dans l'ordre
+  ou on le lit — priorite, identifiant, sujet, responsable, echeance.
+
+  Deux portees pour une seule vue. Hors projet, chaque ligne gagne le nom de
+  son projet : sans lui, deux lots homonymes venus de deux projets seraient
+  indiscernables.
+
+  Les <details> natifs portent le repliage : pas de JavaScript, l'etat
+  survit au clavier et les sections restent accessibles sans script.
+%>
+<% html_title t(:label_work_package_plural), (@project&.name || "Tous les projets") %>
+
+<div class="op-plane-work">
+  <header class="op-plane-work--head">
+    <div>
+      <h1 class="op-plane-work--title"><%= t(:label_work_package_plural) %></h1>
+      <%# La cle js.units.workPackage vaut "work package"/"work packages" et
+          n'interpole PAS le compte : le sous-titre affichait « work packages »
+          en anglais, sans le nombre, au milieu d'une page francaise. %>
+      <p class="op-plane-work--subtitle">
+        <%= @total %> <%= @total > 1 ? "lots de travaux" : "lot de travaux" %>
+        · <%= @groups.size %> <%= @groups.size > 1 ? "statuts" : "statut" %>
+        <% if plane_global? %>· tous les projets visibles<% end %>
+      </p>
+    </div>
+
+    <%# Un seul jeu de destinations, defini dans PlanePathsHelper : les trois
+        commutateurs divergeaient, et deux renvoyaient a l'ancien Gantt. %>
+    <nav class="op-plane-work--views" aria-label="Vues">
+      <% plane_view_switcher(:work).each do |page, label, courante| %>
+        <% if courante %>
+          <span class="op-plane-work--view is-current" aria-current="page"><%= label %></span>
+        <% else %>
+          <%= link_to label, plane_page_path(page), class: "op-plane-work--view" %>
+        <% end %>
+      <% end %>
+    </nav>
+  </header>
+
+  <% if @groups.empty? %>
+    <div class="op-plane-work--empty">
+      <p class="op-plane-work--empty-title">Rien a afficher pour l'instant</p>
+      <p class="op-plane-work--empty-body">
+        Le premier lot de travaux cree apparaitra ici, range sous son statut.
+      </p>
+      <%= link_to "Creer un lot de travaux",
+                  plane_new_work_package_path,
+                  class: "op-plane-work--primary" %>
+    </div>
+  <% end %>
+
+  <% @groups.each do |status, items| %>
+    <details class="op-plane-work--group" open>
+      <summary class="op-plane-work--group-head">
+        <span class="op-plane-work--chevron" aria-hidden="true"></span>
+        <span class="op-plane-work--dot"
+              style="--dot: <%= status&.color&.hexcode || "#94A3AE" %>"></span>
+        <span class="op-plane-work--group-name"><%= status&.name || "Sans statut" %></span>
+        <span class="op-plane-work--count"><%= items.size %></span>
+      </summary>
+
+      <ul class="op-plane-work--list">
+        <% items.each do |wp| %>
+          <li class="op-plane-work--row">
+            <%= link_to work_package_path(wp), class: "op-plane-work--row-link" do %>
+              <span class="op-plane-work--priority"
+                    title="<%= wp.priority&.name %>"
+                    style="--dot: <%= wp.priority&.color&.hexcode || "#CACDCF" %>"></span>
+
+              <span class="op-plane-work--id"><%= wp.id %></span>
+
+              <span class="op-plane-work--type"><%= wp.type&.name %></span>
+
+              <span class="op-plane-work--subject"><%= wp.subject %></span>
+
+              <% if plane_global? %>
+                <span class="op-plane-work--project" title="<%= wp.project&.name %>">
+                  <%= wp.project&.name %>
+                </span>
+              <% end %>
+
+              <% if wp.due_date %>
+                <span class="op-plane-work--due <%= "-late" if wp.due_date < Date.current && !status&.is_closed? %>">
+                  <%= format_date(wp.due_date) %>
+                </span>
+              <% end %>
+
+              <span class="op-plane-work--assignee">
+                <% if wp.assigned_to %>
+                  <%= avatar(wp.assigned_to, size: :mini) %>
+                <% else %>
+                  <span class="op-plane-work--unassigned" aria-label="Non assigne"></span>
+                <% end %>
+              </span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+
+      <%# La creation vit au pied du groupe : on cree la ou on regarde. %>
+      <%= link_to plane_new_work_package_path, class: "op-plane-work--add" do %>
+        <span aria-hidden="true">+</span> Nouveau dans « <%= status&.name %> »
+      <% end %>
+    </details>
+  <% end %>
+</div>

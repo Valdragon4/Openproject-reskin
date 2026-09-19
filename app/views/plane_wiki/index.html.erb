@@ -1,0 +1,44 @@
+<%#
+  Wiki, tous projets : la structure plutot que la liste.
+
+  L'entree globale d'origine ouvrait une requete sur les pages — des lignes
+  a plat. Un wiki est un arbre ; on le rend comme tel, un arbre par projet.
+%>
+<% html_title "Wiki" %>
+
+<div class="op-plane-page">
+  <%= render partial: "plane_shared/head",
+             locals: {
+               titre: "Wiki",
+               sous_titre: "#{@total} #{@total > 1 ? 'pages' : 'page'} dans #{@trees.size} #{@trees.size > 1 ? 'projets' : 'projet'}",
+               origine_label: "Liste filtrable",
+               origine_path: "/wiki_pages?query_id=all"
+             } %>
+
+  <% if @trees.empty? %>
+    <div class="op-plane-empty">
+      <p class="op-plane-empty--title">Aucune page de wiki</p>
+      <p class="op-plane-empty--body">Les pages des projets dont le wiki est activé apparaîtront ici.</p>
+    </div>
+  <% end %>
+
+  <div class="op-plane-split">
+    <% @trees.each do |project, racines, by_parent| %>
+      <section class="op-plane-section">
+        <div class="op-plane-section--head">
+          <h2 class="op-plane-section--title"><%= project.name %></h2>
+          <%= link_to "Ouvrir le wiki", project_wiki_path(project, "wiki"), class: "op-plane-section--more" %>
+        </div>
+
+        <div class="op-plane-tree">
+          <ul class="op-plane-tree--root">
+            <%= render partial: "plane_wiki/branch",
+                       collection: racines,
+                       as: :page,
+                       locals: { by_parent:, project:, profondeur: 0 } %>
+          </ul>
+        </div>
+      </section>
+    <% end %>
+  </div>
+</div>

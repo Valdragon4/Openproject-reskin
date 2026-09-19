@@ -1,0 +1,83 @@
+<%#
+  Réunions : l'agenda d'abord, l'archive ensuite.
+
+  Groupees par jour, sans filtre a choisir. La liste filtrable d'origine
+  reste a un clic pour les recherches.
+%>
+<% html_title "Réunions" %>
+
+<div class="op-plane-page">
+  <%= render partial: "plane_shared/head",
+             locals: {
+               titre: "Réunions",
+               sous_titre: "#{@total} #{@total > 1 ? 'réunions à venir' : 'réunion à venir'}",
+               origine_label: "Liste filtrable",
+               origine_path: "/meetings"
+             } %>
+
+  <% if @by_day.empty? %>
+    <div class="op-plane-empty">
+      <p class="op-plane-empty--title">Aucune réunion à venir</p>
+      <p class="op-plane-empty--body">Les réunions planifiées apparaîtront ici, groupées par jour.</p>
+    </div>
+  <% end %>
+
+  <% @by_day.each do |jour, reunions| %>
+    <section class="op-plane-section">
+      <div class="op-plane-section--head">
+        <h2 class="op-plane-section--title">
+          <%= l(jour, format: "%A %-d %B").capitalize %>
+          <% if jour == Date.current %> — aujourd'hui<% end %>
+        </h2>
+        <span class="op-plane-section--count"><%= reunions.size %></span>
+      </div>
+
+      <ul class="op-plane-list">
+        <% reunions.each do |meeting| %>
+          <li class="op-plane-list--row">
+            <%= link_to meeting_path(meeting), class: "op-plane-list--link" do %>
+              <span class="op-plane-list--date"><%= l(meeting.start_time, format: "%H:%M") %></span>
+              <span class="op-plane-list--sub">
+                <span class="op-plane-list--name"><%= meeting.title %></span>
+                <span class="op-plane-list--meta">
+                  <%= number_with_precision(meeting.duration, precision: 1, strip_insignificant_zeros: true) %> h
+                  <% if meeting.location.present? %> · <%= meeting.location %><% end %>
+                </span>
+              </span>
+              <span class="op-plane-list--right">
+                <% if meeting.project %>
+                  <span class="op-plane-list--chip"><%= meeting.project.name %></span>
+                <% end %>
+              </span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <% if @past.any? %>
+    <%# Les reunions passees sont repliees : on les consulte, on ne les
+        parcourt pas. %>
+    <details class="op-plane-section">
+      <summary class="op-plane-section--title op-plane-toggle">
+        Réunions passées <span class="op-plane-section--count"><%= @past.size %></span>
+      </summary>
+      <ul class="op-plane-list">
+        <% @past.each do |meeting| %>
+          <li class="op-plane-list--row">
+            <%= link_to meeting_path(meeting), class: "op-plane-list--link" do %>
+              <span class="op-plane-list--date"><%= l(meeting.start_time.to_date, format: "%-d %b") %></span>
+              <span class="op-plane-list--name"><%= meeting.title %></span>
+              <span class="op-plane-list--right">
+                <% if meeting.project %>
+                  <span class="op-plane-list--chip"><%= meeting.project.name %></span>
+                <% end %>
+              </span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </details>
+  <% end %>
+</div>

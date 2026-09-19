@@ -45,14 +45,32 @@ module Users::Invitation::PrincipalStep
           defaultData: true,
           component: "opce-members-autocompleter",
           principalType: model.principal_type.underscore,
-          model: selected_principal,
+          model: selected_principals,
           url: autocomplete_for_member_project_members_path(model.project_id, format: :json, type: model.principal_type),
           focusDirectly: false,
-          multiple: false,
-          clearable: false,
+          # Plusieurs destinataires en une seule fois. Inviter une equipe
+          # obligeait jusqu'ici a rouvrir la boite de dialogue autant de fois
+          # qu'il y avait de personnes, en resaisissant le projet, le role et
+          # le message a chaque tour.
+          multiple: true,
+          clearable: true,
           appendTo: "##{Users::Invitation::DialogComponent::DIALOG_ID}"
         }
       )
+
+      # Collage d'une liste. L'auto-completion ci-dessus cherche un terme a
+      # la fois : elle ne peut pas recevoir « a@x.fr, b@x.fr, c@x.fr » en une
+      # fois, ce qui est pourtant le geste courant pour inviter une promotion
+      # ou une equipe. Les deux champs s'additionnent.
+      if model.principal_type == "User"
+        f.text_area(
+          name: :bulk_emails,
+          label: I18n.t("users.invite_user_modal.plane_bulk.label"),
+          caption: I18n.t("users.invite_user_modal.plane_bulk.caption"),
+          rows: 3,
+          style: "resize: vertical"
+        )
+      end
 
       f.autocompleter(
         name: :role_id,
@@ -88,15 +106,21 @@ module Users::Invitation::PrincipalStep
       end
     end
 
-    def selected_principal # rubocop:disable Metrics/AbcSize
-      return if model.id_or_email.blank?
+    # Le champ etant multiple, l'auto-completion attend une LISTE de valeurs
+    # deja selectionnees, pas une seule.
+    def selected_principals
+      model.invitees.filter_map { |value| describe_invitee(value) }
+    end
 
-      if EmailValidator.valid?(model.id_or_email)
-        { name: I18n.t("members.invite_by_mail", mail: model.id_or_email), id: model.id_or_email }
-      else
-        principal = Principal.visible.find_by(id: model.id_or_email)
-        { name: principal&.name || "User #{id_or_email}", id: principal.id }
-      end
+    def describe_invitee(value)
+      return { name: I18n.t("members.invite_by_mail", mail: value), id: value } if EmailValidator.valid?(value)
+
+      principal = Principal.visible.find_by(id: value)
+      # Un identifiant devenu invisible (compte supprime, droits retires) ne
+      # doit pas faire tomber le formulaire : on l'ecarte simplement.
+      return if principal.nil?
+
+      { name: principal.name, id: principal.id }
     end
 
     def name_label

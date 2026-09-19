@@ -61,28 +61,46 @@ See COPYRIGHT and LICENSE files for more details.
 <live-region></live-region>
 <span id="open-blank-target-link-description" class="sr-only"><%= I18n.t("open_link_in_a_new_tab") %></span>
 <opce-spot-drop-modal-portal></opce-spot-drop-modal-portal>
-<% main_menu = render_main_menu(local_assigns.fetch(:menu_name, nil), @project) %>
+<%# Navigation reconstruite : en contexte PROJET seulement. Hors projet, on
+    garde le rendu d'origine — l'accueil global et l'administration ont leurs
+    propres menus, et les remplacer ici casserait ces pages. %>
+<% requested_menu = local_assigns.fetch(:menu_name, nil) %>
+<% main_menu = if @project&.persisted?
+                 render partial: "layouts/plane_nav"
+               elsif requested_menu.nil? || requested_menu == :global_menu
+                 render partial: "layouts/plane_global_nav"
+               else
+                 # Administration et menus specifiques : rendu d'origine.
+                 render_main_menu(requested_menu, @project)
+               end %>
 <% side_displayed = content_for?(:sidebar) || content_for?(:main_menu) || !main_menu.blank? %>
 <% initial_classes = initial_menu_classes(side_displayed, show_decoration) %>
 <div id="wrapper" style="<%= initial_menu_styles %>" class="<%= initial_classes %>">
+  <%# Coquille facon Plane : plus de bandeau sur desktop, tout est dans la
+      barre laterale (voir _plane_sidebar.html.erb). Le bandeau subsiste en
+      version compacte sur mobile uniquement : il porte le seul declencheur
+      d'ouverture du menu, le supprimer partout rendrait la navigation
+      inaccessible au telephone. Plane procede de la meme maniere. %>
   <% if show_decoration %>
-    <header class="op-app-header<%= " op-app-header_development" if OpenProject::Configuration.development_highlight_enabled? %>">
+    <header class="op-app-header op-app-header_mobile-only<%= " op-app-header_development" if OpenProject::Configuration.development_highlight_enabled? %>">
       <div class="op-app-header--start">
         <a href="" class="sr-only skip-navigation-link"
            id="skip-navigation--content"
            aria-label="<%= I18n.t("js.work_packages.jump_marks.label_content") %>">
           <%= I18n.t("js.work_packages.jump_marks.content") %>
         </a>
-        <%= render_top_menu_left %>
-      </div>
-      <div class="op-app-header--center op-app-header--center_mobile-end">
-        <%= render_top_menu_center %>
+        <%= render_plane_mobile_bar %>
       </div>
       <div class="op-app-header--end">
         <%= call_hook :view_layouts_base_top_menu %>
-        <%= render_top_menu_right %>
       </div>
     </header>
+  <% end %>
+  <%# Avatar et menu de compte, ancres en haut a droite de la fenetre.
+      Rendu hors de la laterale ET hors du contenu : sa position ne depend
+      ainsi ni de la largeur du menu, ni du defilement de la page. %>
+  <% if show_decoration %>
+    <%= render_plane_user_corner %>
   <% end %>
   <div id="main"
        class="<%= initial_classes %>"
@@ -95,6 +113,8 @@ See COPYRIGHT and LICENSE files for more details.
         aria-label="<%= t(:label_main_menu) %>">
         <opce-main-menu-resizer></opce-main-menu-resizer>
         <div id="menu-sidebar">
+          <%= render_plane_sidebar_brand %>
+          <%= render_plane_sidebar_actions %>
           <div class="main-menu--top-container">
             <%= render(Primer::OpenProject::FlexLayout.new(align_items: :center, pt: 3)) do |flex|
               flex.with_column(overflow: :hidden) do
@@ -127,6 +147,7 @@ See COPYRIGHT and LICENSE files for more details.
             <%= content_for :sidebar %>
             <%= call_hook :view_layouts_base_sidebar %>
           </div>
+          <%= render_plane_sidebar_footer %>
         </div>
       </nav>
     <% end %>
@@ -212,6 +233,63 @@ See COPYRIGHT and LICENSE files for more details.
   }
 
   wrapper.style.display = '';
+
+  // Les menus reconstruits reposent sur <details> : le navigateur gere
+  // l'ouverture, le clavier et le focus. Il ne gere ni la fermeture au clic
+  // exterieur, ni le placement d'un panneau qui doit echapper a la laterale.
+  //
+  // Le panneau est en position: fixed pour sortir du conteneur qui defile,
+  // sinon il est rogne au bord de la laterale. Fixed le detache aussi de son
+  // declencheur : on lui pose donc ses coordonnees a l'ouverture, a partir
+  // de la position reelle du bouton.
+  const placerPanneau = (details) => {
+    const bouton = details.querySelector('summary');
+    const panneau = details.querySelector('.op-plane-add--panel');
+    if (!bouton || !panneau) return;
+
+    const b = bouton.getBoundingClientRect();
+    panneau.style.top = `${Math.round(b.bottom + 6)}px`;
+    panneau.style.left = `${Math.round(b.left)}px`;
+
+    // Si le panneau sortait par la droite ou par le bas, on le ramene dans
+    // la fenetre plutot que de le laisser inatteignable.
+    const p = panneau.getBoundingClientRect();
+    if (p.right > window.innerWidth - 8) {
+      panneau.style.left = `${Math.round(window.innerWidth - p.width - 8)}px`;
+    }
+    if (p.bottom > window.innerHeight - 8) {
+      panneau.style.top = `${Math.round(Math.max(8, b.top - p.height - 6))}px`;
+    }
+  };
+
+  document.addEventListener('toggle', (e) => {
+    const d = e.target;
+    if (d instanceof HTMLDetailsElement && d.hasAttribute('data-plane-dismiss') && d.open) {
+      placerPanneau(d);
+    }
+  }, true);
+
+  // Un panneau fixe ne suit pas son declencheur quand la page bouge : on le
+  // replace, sans quoi il resterait seul au milieu de l'ecran.
+  const replacerOuverts = () => {
+    document.querySelectorAll('details[data-plane-dismiss][open]').forEach(placerPanneau);
+  };
+  window.addEventListener('resize', replacerOuverts);
+  window.addEventListener('scroll', replacerOuverts, true);
+
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('details[data-plane-dismiss][open]').forEach((d) => {
+      if (!d.contains(e.target)) d.open = false;
+    });
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll('details[data-plane-dismiss][open]').forEach((d) => {
+      d.open = false;
+      d.querySelector('summary')?.focus();
+    });
+  });
 
   // Wrapper for page-specific JS from deprecated inline functions
   // no longer available with CSP.

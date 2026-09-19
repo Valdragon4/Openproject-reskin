@@ -228,7 +228,11 @@ class PermittedParams
   def user_invitation
     params
       .require(:user_invitation)
-      .permit(:project_id, :principal_type, :id_or_email, :role_id, :message)
+      # id_or_email figure DEUX FOIS, en scalaire et en tableau : le champ
+      # accepte desormais plusieurs destinataires, mais une valeur unique
+      # doit continuer de passer. Rails traite les filtres scalaires et les
+      # filtres tableau separement, les deux cohabitent sans s'annuler.
+      .permit(:project_id, :principal_type, :id_or_email, :role_id, :message, :bulk_emails, id_or_email: [])
   end
 
   def type(args = {})

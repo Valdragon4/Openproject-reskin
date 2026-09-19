@@ -458,17 +458,57 @@ export class TimelineCellRenderer {
     return labels;
   }
 
+  // Refonte Plane.
+  //
+  // La couleur d'une barre ne vient plus du type configure en base. Ces
+  // teintes sont saturees, arbitrairement nombreuses et illisibles en mode
+  // sombre : elles transformaient la frise en nuancier. Une palette unique
+  // et sourde porte desormais l'AVANCEMENT, qui est ce qu'on lit sur un
+  // Gantt. Le type reste dans sa colonne, dans l'infobulle et dans les
+  // filtres : aucune information n'est perdue, elle change de support.
+  //
+  // L'element recoit --plane-progress, dont la feuille de style se sert
+  // pour remplir la portion accomplie de la barre.
   protected applyTypeColor(renderInfo:RenderInfo, bg:HTMLElement):void {
     const wp = renderInfo.workPackage;
-    const { type } = wp;
     const selectionMode = renderInfo.viewParams.activeSelectionMode;
 
-    // Don't apply the class in selection mode
-    const { id } = type;
+    const typeId = wp.type?.id;
+    if (typeId) {
+      bg.classList.remove(Highlighting.backgroundClass('type', typeId));
+    }
+
+    bg.classList.add('op-plane-bar');
+    bg.classList.remove('-plane-closed', '-plane-active', '-plane-overdue', '-plane-upcoming');
+
     if (selectionMode) {
-      bg.classList.remove(Highlighting.backgroundClass('type', id!));
+      return;
+    }
+
+    // La portion accomplie remplit la barre quand l'avancement est saisi.
+    const done = Number(wp.percentageDone) || 0;
+    bg.style.setProperty('--plane-progress', `${Math.max(0, Math.min(100, done))}%`);
+
+    // L'etat est TEMPOREL, pas administratif. Sur une frise, ce qu'on lit
+    // n'est pas le statut configure en base mais la position par rapport a
+    // aujourd'hui : est-ce fait, est-ce en cours, est-ce en retard, est-ce
+    // a venir. Quatre etats, toujours renseignes, quel que soit le
+    // parametrage de l'instance.
+    if (wp.status?.isClosed === true) {
+      bg.classList.add('-plane-closed');
+      return;
+    }
+
+    const today = moment();
+    const start = wp.startDate ? moment(wp.startDate as string) : null;
+    const due = wp.dueDate ? moment(wp.dueDate as string).endOf('day') : null;
+
+    if (due && due.isBefore(today)) {
+      bg.classList.add('-plane-overdue');
+    } else if (start && start.isAfter(today)) {
+      bg.classList.add('-plane-upcoming');
     } else {
-      bg.classList.add(Highlighting.backgroundClass('type', id!));
+      bg.classList.add('-plane-active');
     }
   }
 

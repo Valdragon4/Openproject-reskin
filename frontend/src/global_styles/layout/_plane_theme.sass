@@ -1,0 +1,178 @@
+// Palette Plane pour OpenProject.
+//
+// Valeurs resolues depuis @makeplane/propel 0.7.0 (tokens oklch convertis).
+// On reecrit les variables qu'OpenProject consomme deja plutot que de
+// combattre ses selecteurs.
+//
+// STRUCTURE DE LA CASCADE — a ne pas modifier a la legere.
+// Une propriete personnalisee se resout la ou elle est DECLAREE. Si les
+// primitives etaient redefinies sur <body> alors que le mapping vit sur
+// :root, le mapping garderait les valeurs claires et le mode sombre
+// n'aurait aucun effet sur les roles derives.
+// D'ou le montage suivant :
+//   1. primitives CLAIRES  -> le selecteur de base
+//   2. primitives SOMBRES  -> le meme, restreint au mode sombre
+//   3. mapping OpenProject -> le selecteur de base, a nouveau
+// Les trois portent sur <body>, donc le mapping lit toujours la primitive
+// gagnante pour le mode courant.
+//
+// SPECIFICITE. OpenProject expose data-color-mode ET data-light-theme /
+// data-dark-theme sur <body>. Primer declare ses propres tokens sur
+// [data-color-mode=x][data-y-theme=z], soit (0,2,0) : un simple
+// body[data-color-mode], soit (0,1,1), perdait la cascade et le bouton
+// primaire restait vert. On cible donc les deux attributs : (0,2,1).
+//
+// ATTENTION : jamais de commentaire // en fin de ligne sur une propriete
+// personnalisee. SASS conserve la valeur verbatim, commentaire compris, et
+// la declaration devient invalide en silence.
+
+// ------------------------------------------------- 1. Primitives claires
+body[data-color-mode][data-light-theme],
+body[data-color-mode][data-dark-theme]
+  --plane-n-100:  #FCFCFC
+  --plane-n-200:  #F9F9F9
+  --plane-n-300:  #F2F2F3
+  --plane-n-400:  #EAEBEC
+  --plane-n-500:  #E1E2E3
+  --plane-n-600:  #D5D7D9
+  --plane-n-700:  #CACDCF
+  --plane-n-800:  #767C7F
+  --plane-n-900:  #5D6265
+  --plane-n-1000: #494D50
+  --plane-n-1100: #313435
+  --plane-n-1200: #0F0F10
+
+  // chrome et laterale : le sol de l'application
+  --plane-canvas:  #F2F2F3
+  // contenu : la surface qui porte l'attention
+  --plane-surface: #FFFFFF
+
+  --plane-brand:        #006399
+  --plane-brand-hover:  #005685
+  --plane-brand-active: #004A73
+  --plane-brand-fg:     #FFFFFF
+  --plane-brand-subtle: #F5FBFF
+  --plane-brand-border: #D6F1FF
+
+  // Le logo est un asset blanc dessine pour le bandeau bleu : sur une
+  // laterale claire il doit etre ramene au noir, en sombre il reste blanc.
+  --plane-logo-filter: brightness(0) saturate(100%)
+
+// ------------------------------------------------- 2. Primitives sombres
+// Variantes tonales plus claires et desaturees — pas une inversion.
+body[data-color-mode="dark"][data-dark-theme]
+  --plane-n-100:  #141415
+  --plane-n-200:  #181A1B
+  --plane-n-300:  #1D1F20
+  --plane-n-400:  #222425
+  --plane-n-500:  #2C2E2F
+  --plane-n-600:  #36393A
+  --plane-n-700:  #434647
+  --plane-n-800:  #7A8185
+  --plane-n-900:  #959A9D
+  --plane-n-1000: #AFB3B6
+  --plane-n-1100: #CACDCE
+  --plane-n-1200: #E4E6E7
+
+  --plane-canvas:  #0F0F10
+  --plane-surface: #141415
+
+  --plane-brand:        #2893CC
+  --plane-brand-hover:  #4CA9DC
+  --plane-brand-active: #1F7CAE
+  // Un accent clair porte un label sombre : blanc sur #2893CC ne donne que
+  // 3,4:1. Le quasi-noir monte a 8:1 et tient le AA.
+  --plane-brand-fg:     #06131A
+  --plane-brand-subtle: #071922
+  --plane-brand-border: #0F374D
+
+  --plane-logo-filter: none
+
+// -------------------------------------- 3. Mapping vers les tokens OpenProject
+body[data-color-mode][data-light-theme],
+body[data-color-mode][data-dark-theme]
+  // Chrome : il devient le canvas. Plus de bandeau colore.
+  --header-height:                48px
+  --header-bg-color:              var(--plane-canvas)
+  --header-bgColor:               var(--plane-canvas)
+  --header-border-bottom-color:   var(--plane-n-400)
+  --header-border-bottom-width:   1px
+  --header-item-font-color:       var(--plane-n-1100)
+  --header-item-font-hover-color: var(--plane-n-1200)
+  --header-fgColor-default:       var(--plane-n-1000)
+  --header-fgColor-logo:          var(--plane-n-1200)
+  --header-borderColor-divider:   var(--plane-n-400)
+  --headerSearch-bgColor:         var(--plane-surface)
+  --headerSearch-borderColor:     var(--plane-n-400)
+
+  // Laterale : meme fond que le chrome, un seul sol continu
+  --main-menu-bg-color:               var(--plane-canvas)
+  --main-menu-border-color:           var(--plane-n-400)
+  --main-menu-font-color:             var(--plane-n-1100)
+  --main-menu-bg-selected-background: var(--plane-n-400)
+  --main-menu-selected-font-color:    var(--plane-n-1200)
+  --main-menu-bg-selected-border:     transparent
+  --main-menu-hover-border-color:     transparent
+  --main-menu-item-height:            32px
+  --main-menu-font-size:              13px
+
+  // Accent : actions primaires, selection, focus. Rien d'autre.
+  --accent-color:         var(--plane-brand)
+  --accent-color--major1: var(--plane-brand-hover)
+  --accent-color--major2: var(--plane-brand-active)
+  --accent-color--minor1: var(--plane-brand-border)
+  --accent-color--minor2: var(--plane-brand-subtle)
+
+  // Bouton primaire : le vert est rendu a sa fonction semantique
+  --primary-button-color:         var(--plane-brand)
+  --primary-button-color--major1: var(--plane-brand-hover)
+  --primary-button-color--major2: var(--plane-brand-active)
+  --primary-button-color--minor1: var(--plane-brand-subtle)
+  --primary-button-color--minor2: var(--plane-brand-border)
+  --font-color-on-primary:        var(--plane-brand-fg)
+
+  // OpenProject re-mappe les tokens Primer dans un <style> inline
+  // (_primer_color_mapping.erb) AVEC !important :
+  //   --button-primary-bgColor-rest: var(--button--primary-background-color) !important
+  // Un !important sur une propriete personnalisee bat toute specificite :
+  // surcharger --button-primary-* directement ne sert a rien. Le bon point
+  // d'entree est la couche OpenProject, que ce mapping propage ensuite.
+  // Le mapping matche <body>, donc ces valeurs doivent vivre sur <body>.
+  --button--primary-background-color:          var(--plane-brand)
+  --button--primary-background-hover-color:    var(--plane-brand-hover)
+  --button--primary-background-active-color:   var(--plane-brand-active)
+  --button--primary-background-disabled-color: var(--plane-brand-subtle)
+  --button--primary-border-color:              var(--plane-brand)
+  --button--primary-border-disabled-color:     var(--plane-brand-border)
+  --button--primary-font-color:                var(--plane-brand-fg)
+
+  // Corps et surfaces
+  --body-background:     var(--plane-surface)
+  --body-font-color:     var(--plane-n-1200)
+  --bgColor-default:     var(--plane-surface)
+  --bgColor-muted:       var(--plane-canvas)
+  --fgColor-default:     var(--plane-n-1200)
+  --fgColor-muted:       var(--plane-n-1000)
+  --borderColor-default: var(--plane-n-400)
+  --borderColor-muted:   var(--plane-n-400)
+  --focus-outlineColor:  var(--plane-brand)
+  --focus-outline:       2px solid var(--plane-brand)
+
+  // Listes et menus deroulants
+  --drop-down-hover-bg-color:              var(--plane-n-200)
+  --drop-down-selected-bg-color:           var(--plane-n-400)
+  --box-list-item-bg-color:                var(--plane-surface)
+  --box-list-item-bg-hover-color:          var(--plane-n-200)
+  --box-list-item-border-color:            var(--plane-n-400)
+  --box-list-item-selected-bg-color:       var(--plane-brand-subtle)
+  --box-list-item-selected-border-color:   var(--plane-brand-border)
+
+  // Tables : densite Plane
+  --generic-table--header-height:    36px
+  --generic-table--header-font-size: .75rem
+  --table-timeline--row-height:      34px
+
+  // Rayons courts — Plane ne s'arrondit jamais beaucoup
+  --borderRadius-small:  4px
+  --borderRadius-medium: 6px
+  --borderRadius-large:  8px

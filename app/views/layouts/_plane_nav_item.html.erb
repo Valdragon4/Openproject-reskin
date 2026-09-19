@@ -1,0 +1,94 @@
+<%#
+  Une entree de navigation.
+
+  ATTENTION — REGRESSION GRAVE CORRIGEE ICI.
+  La premiere version ne rendait que le lien et ignorait node.children et
+  node.partial. Consequence : l'arbre des pages du wiki, les listes de vues
+  enregistrees, la liste des sprints et surtout LES SEIZE PAGES DE REGLAGES
+  DU PROJET devenaient inatteignables — les reglages n'ont pas d'onglets
+  propres dans OpenProject, le menu etait leur seul acces.
+
+  On rend donc les enfants, mais dans une sous-liste repliable qui nous
+  appartient. On ne reutilise toujours pas render_menu_node pour le PARENT :
+  c'est lui qui produisait les doublons (il rend l'entree, son sous-menu
+  deroulant et sa ligne de retour « ← »). Pour les ENFANTS en revanche on
+  s'appuie sur les composants d'OpenProject, qui savent rendre les partials
+  dynamiques comme l'arbre du wiki.
+%>
+<%# Le menu de reference suit la portee de la page : filtrer les enfants
+    avec :project_menu en contexte global masquait les sous-entrees du menu
+    global, dont les vues enregistrees de la table des lots. %>
+<% menu_courant = @project&.persisted? ? :project_menu : :global_menu %>
+<% caption, url, selected = extract_node_details(node, @project) %>
+<% url = plane_node_url(node, url) %>
+<% enfants = node.children.select { |child| visible_node?(menu_courant, child) } %>
+<% depliable = enfants.any? || node.partial.present? %>
+
+<% if url.present? || depliable %>
+  <%# data-nom porte le nom d'item du registre de menus. Il ne sert a rien
+      a l'affichage : il permet de verifier, sur le rendu reel, qu'aucune
+      entree d'une installation standard n'a disparu de la navigation
+      reconstruite. Comparer des libelles traduits serait fragile ; les
+      noms, eux, sont stables. %>
+  <li class="op-nav--item" data-nom="<%= node.name %>">
+    <% if depliable %>
+      <details class="op-nav--tree" <%= "open" if selected %>>
+        <summary class="op-nav--link op-nav--link_tree <%= "is-current" if selected %>">
+          <% if node.icon.present? %>
+            <%= render(Primer::Beta::Octicon.new(icon: node.icon, classes: "op-nav--icon")) %>
+          <% end %>
+          <span class="op-nav--text"><%= caption %></span>
+          <span class="op-nav--caret" aria-hidden="true"></span>
+        </summary>
+
+        <ul class="op-nav--subtree">
+          <%# La page parente reste joignable : sans ce lien, le depliage
+              remplacerait l'acces au lieu de l'enrichir.
+              Sauf quand un partial prend le relais — l'arbre du wiki liste
+              deja sa page racine, et le lien faisait doublon. %>
+          <% partial_enfant = enfants.any? { |c| c.partial.present? } %>
+          <% if url.present? && node.partial.blank? && !partial_enfant %>
+            <li class="op-nav--item">
+              <%= link_to caption, url, class: "op-nav--sublink #{"is-current" if selected}" %>
+            </li>
+          <% end %>
+
+          <% if node.partial.present? %>
+            <li class="op-nav--item op-nav--item_partial">
+              <%= render(partial: node.partial, locals: { name: node.name, parent_name: node.name }) %>
+            </li>
+          <% end %>
+
+          <%# LE PARTIAL PRIME SUR L'URL.
+              Certains noeuds portent les deux : :wiki_menu_partial pointe
+              vers /wiki tout en declarant partial: "wiki/menu_pages_tree".
+              En testant l'URL d'abord, on rendait un lien au libelle genere
+              — « Wiki menu partial » — au lieu de l'arbre des pages. %>
+          <% enfants.each do |child| %>
+            <% if child.partial.present? %>
+              <li class="op-nav--item op-nav--item_partial">
+                <%= render(partial: child.partial, locals: { name: child.name, parent_name: node.name }) %>
+              </li>
+            <% else %>
+              <% c_caption, c_url, c_selected = extract_node_details(child, @project) %>
+              <% if c_url.present? %>
+                <li class="op-nav--item">
+                  <%= link_to c_caption, c_url, class: "op-nav--sublink #{"is-current" if c_selected}" %>
+                </li>
+              <% end %>
+            <% end %>
+          <% end %>
+        </ul>
+      </details>
+    <% else %>
+      <%= link_to url,
+                  class: "op-nav--link #{"is-current" if selected}",
+                  "aria-current": (selected ? "page" : nil) do %>
+        <% if node.icon.present? %>
+          <%= render(Primer::Beta::Octicon.new(icon: node.icon, classes: "op-nav--icon")) %>
+        <% end %>
+        <span class="op-nav--text"><%= caption %></span>
+      <% end %>
+    <% end %>
+  </li>
+<% end %>

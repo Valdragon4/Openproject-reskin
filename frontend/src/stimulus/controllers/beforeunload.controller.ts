@@ -27,10 +27,17 @@
 //++
 
 import { ApplicationController } from 'stimulus-use';
+import * as Turbo from '@hotwired/turbo';
 import { TurboBeforeVisitEvent } from '@hotwired/turbo';
+import { planeConfirm } from 'core-turbo/plane-confirm';
 
 export class BeforeunloadController extends ApplicationController {
   private abortController = new AbortController();
+
+  // Une visite deja confirmee doit traverser le garde sans le redeclencher,
+  // sinon la modale se rouvrirait a l'infini : les modifications ne sont pas
+  // « enregistrees » par le fait d'avoir clique sur Quitter.
+  private approvedVisit:string|null = null;
 
   connect() {
     super.connect();
@@ -52,12 +59,15 @@ export class BeforeunloadController extends ApplicationController {
   handleEvent(evt:Event) {
     switch (evt.type) {
       case 'beforeunload':
-      case 'turbo:before-visit':
         this.beforeunloadHandler(evt);
+        break;
+      case 'turbo:before-visit':
+        this.beforeVisitHandler(evt as TurboBeforeVisitEvent);
         break;
       case 'turbo:submit-end':
       case 'turbo:load':
       case 'turbo:render':
+        this.approvedVisit = null;
         window.OpenProject.pageState = 'pristine';
         break;
       case 'submit':
@@ -68,25 +78,58 @@ export class BeforeunloadController extends ApplicationController {
     }
   }
 
-  private beforeunloadHandler(evt:BeforeUnloadEvent|TurboBeforeVisitEvent) {
-    const hasUnsavedChanges = evt.type === 'turbo:before-visit'
-      ? window.OpenProject.pageHasUnsavedChanges
-      : window.OpenProject.pageWasEdited;
-
-    if (!hasUnsavedChanges) {
+  // Sortie du site (fermeture d'onglet, rechargement, URL saisie a la main).
+  //
+  // Ce cas N'EST PAS habillable : les navigateurs imposent leur propre boite
+  // et leur propre texte pour empecher un site de retenir l'internaute. On se
+  // contente donc d'armer l'evenement. Appeler window.confirm() ici — ce que
+  // faisait le code precedent — est sans effet : pendant beforeunload les
+  // navigateurs ignorent les dialogues script et renvoient false.
+  private beforeunloadHandler(evt:BeforeUnloadEvent) {
+    if (!window.OpenProject.pageWasEdited) {
       return;
     }
 
-    if (window.confirm(I18n.t('js.text_are_you_sure_to_cancel'))) {
+    evt.preventDefault();
+    // Chrome exige encore returnValue.
+    evt.returnValue = '';
+  }
+
+  // Navigation INTERNE (clic sur un lien pilote par Turbo). C'est la quasi-
+  // totalite des cas vecus, et la elle nous appartient : on annule la visite,
+  // on pose notre modale, puis on rejoue la visite si l'utilisateur confirme.
+  //
+  // turbo:before-visit n'est pas annulable « en attente » : le gestionnaire
+  // est synchrone, donc impossible d'attendre la reponse avant de decider. La
+  // seule construction correcte est d'annuler d'abord, toujours, et de
+  // relancer ensuite.
+  private beforeVisitHandler(evt:TurboBeforeVisitEvent) {
+    const { url } = evt.detail;
+
+    if (this.approvedVisit === url) {
+      this.approvedVisit = null;
       return;
     }
 
-    // Cancel the event
+    if (!window.OpenProject.pageHasUnsavedChanges) {
+      return;
+    }
+
     evt.preventDefault();
 
-    // Chrome requires returnValue to be set
-    if (evt.type === 'beforeunload') {
-      evt.returnValue = '';
-    }
+    void planeConfirm({
+      message: I18n.t('js.text_are_you_sure_to_cancel'),
+      danger: true,
+    }).then((confirmed) => {
+      if (!confirmed) {
+        return;
+      }
+
+      this.approvedVisit = url;
+      // action « advance » : on reproduit un clic de lien, pour que l'entree
+      // d'historique et le garde de rendu d'Angular (qui distingue les
+      // visites de restauration) se comportent comme sans interception.
+      Turbo.visit(url, { action: 'advance' });
+    });
   }
 }

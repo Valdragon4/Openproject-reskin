@@ -1,0 +1,222 @@
+// Navigation de projet reconstruite.
+//
+// Une colonne de navigation se lit par blocs, pas comme une liste de vingt
+// lignes equivalentes. Chaque section porte un libelle discret, les pages
+// reconstruites ouvrent la colonne, et les vues d'origine descendent dans
+// un bloc repliable en bas.
+
+.op-nav
+  display: flex
+  flex-direction: column
+  padding-block: 4px 8px
+
+.op-nav--section
+  padding-block: 2px
+
+  & + .op-nav--section
+    margin-top: 10px
+
+// Le libelle situe le bloc sans se disputer l'attention avec les entrees :
+// capitale reduite, tracking, aligne sur le TEXTE des items et non sur le
+// bord de la colonne.
+.op-nav--label
+  padding-inline: 18px
+  padding-block: 4px
+  font-size: 10px
+  font-weight: 600
+  letter-spacing: .06em
+  text-transform: uppercase
+  color: var(--plane-sidebar-fg-muted)
+
+.op-nav--list
+  margin: 0
+  padding: 0
+  list-style: none
+
+// Entrees rendues par _plane_nav_item : une icone, un libelle, un lien.
+.op-nav--link
+  display: flex
+  align-items: center
+  gap: 9px
+  min-height: 32px
+  margin-inline: 8px
+  padding-inline: 10px
+  border-radius: 6px
+  font-size: 13px
+  text-decoration: none
+  color: var(--plane-sidebar-fg)
+  transition: background-color 120ms cubic-bezier(.2, .7, .3, 1), color 120ms cubic-bezier(.2, .7, .3, 1)
+
+  &:hover
+    background: var(--plane-sidebar-accent)
+    color: var(--plane-sidebar-accent-fg)
+    text-decoration: none
+
+  // Page courante : surface teintee et graisse, pas un aplat colore.
+  &.is-current
+    background: var(--plane-sidebar-accent)
+    color: var(--plane-sidebar-accent-fg)
+    font-weight: 600
+
+    .op-nav--icon
+      color: var(--plane-sidebar-accent-fg)
+
+// L'icone situe l'entree, elle ne la nomme pas : elle reste en retrait.
+.op-nav--icon
+  flex: 0 0 auto
+  color: var(--plane-sidebar-fg-muted)
+
+.op-nav--text
+  flex: 1 1 auto
+  min-width: 0
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+
+// ---------------------------------------------- Sous-arbres depliables
+// Wiki (arbre des pages), reglages du projet, vues enregistrees. Le
+// chevron tourne a l'ouverture ; les enfants s'indentent sous un filet
+// vertical qui rattache visuellement la branche a son parent.
+.op-nav--link_tree
+  cursor: pointer
+  list-style: none
+
+  &::-webkit-details-marker
+    display: none
+
+.op-nav--caret
+  flex: 0 0 auto
+  width: 10px
+  height: 10px
+  background: currentColor
+  opacity: .5
+  clip-path: polygon(30% 18%, 42% 6%, 82% 50%, 42% 94%, 30% 82%, 62% 50%)
+  transition: transform 140ms cubic-bezier(.2, .7, .3, 1)
+
+details[open] > .op-nav--link_tree .op-nav--caret
+  transform: rotate(90deg)
+
+.op-nav--subtree
+  margin: 2px 0 6px
+  padding: 0
+  list-style: none
+  margin-inline-start: 26px
+  border-left: 1px solid var(--plane-sidebar-border)
+
+.op-nav--sublink
+  display: block
+  padding: 5px 10px
+  margin-inline: 4px
+  border-radius: 5px
+  font-size: 12.5px
+  color: var(--plane-sidebar-fg-muted)
+  text-decoration: none
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+  transition: background-color 120ms cubic-bezier(.2, .7, .3, 1), color 120ms cubic-bezier(.2, .7, .3, 1)
+
+  &:hover
+    background: var(--plane-sidebar-accent)
+    color: var(--plane-sidebar-accent-fg)
+    text-decoration: none
+
+  &.is-current
+    color: var(--plane-sidebar-accent-fg)
+    font-weight: 600
+
+// Les partials d'OpenProject (arbre du wiki, listes de vues enregistrees)
+// apportent leur propre balisage : un champ de recherche pleine largeur,
+// un commutateur segmente, une arborescence. On ne les reecrit pas — on
+// les ramene a l'echelle de la colonne.
+.op-nav--item_partial
+  padding-inline: 4px
+  font-size: 12.5px
+
+  // Le champ de filtre occupait toute la largeur avec la taille d'un
+  // formulaire de page : ici c'est un outil de colonne.
+  .FormControl-input
+    min-height: 28px
+    font-size: 12.5px
+
+  .FormControl,
+  .FormControl-input-wrap
+    width: 100%
+
+  // Le commutateur segmente du partial (« Pages / Arborescence ») est un
+  // controle de page, trop haut pour une laterale.
+  .SegmentedControl
+    font-size: 11.5px
+
+  // L'arborescence elle-meme : lignes a la meme densite que le reste de
+  // la navigation, indentation portee par un filet plutot que par du vide.
+  .op-sidemenu-filterable-tree
+    display: block
+    margin-top: 6px
+
+  a
+    display: block
+    padding: 5px 8px
+    border-radius: 5px
+    font-size: 12.5px
+    color: var(--plane-sidebar-fg-muted)
+    text-decoration: none
+
+    &:hover
+      background: var(--plane-sidebar-accent)
+      color: var(--plane-sidebar-accent-fg)
+      text-decoration: none
+
+// ------------------------------------------- Avatar en haut a droite
+// Ancre sur la fenetre, hors de la laterale et hors du contenu : sa
+// position ne depend ni de la largeur du menu, ni du defilement.
+.op-plane-user-corner
+  position: fixed
+  top: 10px
+  right: 16px
+  z-index: 30
+  display: flex
+  align-items: center
+
+// ------------------------------------------------------ Vues classiques
+// Les pages d'origine ne sont pas supprimees : elles sont rangees. Le bloc
+// est replie au repos et n'occupe qu'une ligne.
+.op-nav--section_legacy
+  margin-top: 14px
+  border-top: 1px solid var(--plane-sidebar-border)
+  padding-top: 8px
+
+.op-nav--label_toggle
+  display: flex
+  align-items: center
+  gap: 6px
+  cursor: pointer
+  list-style: none
+  user-select: none
+
+  &::-webkit-details-marker
+    display: none
+
+  // Chevron tourne a l'ouverture : l'etat du bloc se lit sans compter.
+  &::before
+    content: ""
+    width: 10px
+    height: 10px
+    flex: 0 0 auto
+    background: currentColor
+    clip-path: polygon(30% 18%, 42% 6%, 82% 50%, 42% 94%, 30% 82%, 62% 50%)
+    transition: transform 140ms cubic-bezier(.2, .7, .3, 1)
+
+  &:hover
+    color: var(--plane-sidebar-accent-fg)
+
+details[open] > .op-nav--label_toggle::before
+  transform: rotate(90deg)
+
+// ---------------------------------------------------------------- Pied
+// Les reglages restent au pied de la colonne : on y va rarement, mais on
+// doit toujours savoir ou les trouver.
+.op-nav--section_footer
+  margin-top: auto
+  padding-top: 8px
+  border-top: 1px solid var(--plane-sidebar-border)

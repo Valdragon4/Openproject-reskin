@@ -118,7 +118,16 @@ Rails.application.reloader.to_prepare do
                      require: :loggedin
 
       map.permission :view_project,
-                     { projects: %i[show list_row_menu] },
+                     {
+                       projects: %i[show list_row_menu],
+                       # Liste des projets reconstruite. Declaree ici pour la
+                       # meme raison que les autres pages Plane : le saut vers
+                       # une entree de menu interroge le registre et leve
+                       # UnknownPermissionError si le controleur y est inconnu.
+                       # La page filtre elle-meme par Project.visible : elle ne
+                       # montre donc jamais plus que cette permission n'autorise.
+                       plane_projects: %i[index]
+                     },
                      permissible_on: :project,
                      public: true
 
@@ -316,7 +325,16 @@ Rails.application.reloader.to_prepare do
                        "work_packages/hover_card": %i[show],
                        work_package_relations_tab: %i[index],
                        "work_packages/reminders": %i[modal_body create update destroy],
-                       "work_packages/project_attributes_tab": %i[index]
+                       "work_packages/project_attributes_tab": %i[index],
+                       # Pages reconstruites. Les DECLARER ici plutot que de
+                       # contourner le controle avec skip_permissions_check :
+                       # le saut vers une entree de menu interroge le registre
+                       # et leve UnknownPermissionError si le controleur y est
+                       # inconnu. Ces pages lisent des lots de travaux, donc
+                       # elles relevent exactement de cette permission.
+                       plane_work: %i[index],
+                       plane_gantt: %i[index],
+                       plane_overview: %i[index]
                      },
                      permissible_on: %i[work_package project],
                      contract_actions: { work_packages: %i[read] }

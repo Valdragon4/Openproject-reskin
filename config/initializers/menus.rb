@@ -179,6 +179,100 @@ Redmine::MenuManager.map :account_menu do |menu|
 end
 
 Redmine::MenuManager.map :global_menu do |menu|
+  # ---------------------------------------------------------------------
+  # Pages reconstruites, portee GLOBALE.
+  #
+  # Ce sont les memes controleurs que dans le menu projet, appeles sans
+  # project_id : PlaneScope bascule alors sur l'ensemble des lots visibles.
+  # Jusqu'ici le menu global renvoyait aux vues d'origine, ce qui arretait
+  # la refonte a la frontiere du projet.
+  #
+  # skip_permissions_check : l'autorisation est verifiee dans le controleur
+  # (allowed_in_any_project?), pas via le registre de permissions.
+  #
+  # Les entrees d'origine ne sont PAS supprimees : PlaneNavHelper les range
+  # dans un bloc « Vues classiques » replie.
+  # ---------------------------------------------------------------------
+  menu.push :plane_projects,
+            { controller: "/plane_projects", action: "index" },
+            caption: "Projets",
+            icon: "stack",
+            if: ->(_) { User.current.logged? },
+            skip_permissions_check: true
+
+  menu.push :plane_work,
+            { controller: "/plane_work", action: "index" },
+            caption: "Travail",
+            icon: "op-view-list",
+            if: ->(_) { User.current.logged? },
+            skip_permissions_check: true
+
+  menu.push :plane_gantt,
+            { controller: "/plane_gantt", action: "index" },
+            caption: "Frise",
+            icon: "project",
+            if: ->(_) { User.current.logged? },
+            skip_permissions_check: true
+
+  menu.push :plane_home,
+            { controller: "/plane_home", action: "index" },
+            caption: "Accueil",
+            icon: "home",
+            if: ->(_) { User.current.logged? },
+            skip_permissions_check: true
+
+  menu.push :plane_my,
+            { controller: "/plane_my", action: "index" },
+            caption: "Mon travail",
+            icon: "person",
+            if: ->(_) { User.current.logged? },
+            skip_permissions_check: true
+
+  menu.push :plane_time,
+            { controller: "/plane_time", action: "index" },
+            caption: "Mon temps",
+            icon: "stopwatch",
+            if: ->(_) { User.current.logged? },
+            skip_permissions_check: true
+
+  # Les quatre suivantes dependent d'un module : la condition reprend celle
+  # de l'entree d'origine — un module desactive ne doit pas laisser une
+  # entree morte dans la colonne.
+  menu.push :plane_boards,
+            { controller: "/plane_boards", action: "index" },
+            caption: "Tableaux",
+            icon: "op-boards",
+            if: ->(_) { User.current.logged? && Project.visible.has_module(:board_view).exists? },
+            skip_permissions_check: true
+
+  menu.push :plane_meetings,
+            { controller: "/plane_meetings", action: "index" },
+            caption: "Réunions",
+            icon: "comment-discussion",
+            if: ->(_) { User.current.logged? && User.current.allowed_in_any_project?(:view_meetings) },
+            skip_permissions_check: true
+
+  menu.push :plane_news,
+            { controller: "/plane_news", action: "index" },
+            caption: "Actualités",
+            icon: "megaphone",
+            if: ->(_) { User.current.logged? && User.current.allowed_in_any_project?(:view_news) },
+            skip_permissions_check: true
+
+  menu.push :plane_wiki,
+            { controller: "/plane_wiki", action: "index" },
+            caption: "Wiki",
+            icon: "book",
+            if: ->(_) { User.current.logged? && User.current.allowed_in_any_project?(:view_wiki_pages) },
+            skip_permissions_check: true
+
+  menu.push :plane_costs,
+            { controller: "/plane_costs", action: "index" },
+            caption: "Temps et coûts",
+            icon: "op-cost-reports",
+            if: ->(_) { User.current.logged? && User.current.allowed_in_any_project?(:view_time_entries) },
+            skip_permissions_check: true
+
   # Homescreen
   menu.push :home,
             { controller: "/homescreen", action: "index" },
@@ -243,7 +337,7 @@ Redmine::MenuManager.map :global_menu do |menu|
             { controller: "/work_packages", action: "index" },
             caption: :label_work_package_plural,
             icon: "op-view-list",
-            after: :activity
+            after: :plane_work
 
   menu.push :work_packages_query_select,
             { controller: "/work_packages", action: "index" },
@@ -699,6 +793,42 @@ Redmine::MenuManager.map :admin_menu do |menu|
 end
 
 Redmine::MenuManager.map :project_menu do |menu|
+  # ---------------------------------------------------------------------
+  # Pages reconstruites. Elles vivent bien dans le menu PROJET : declarees
+  # par erreur dans :global_menu, elles n'apparaissaient nulle part dans la
+  # laterale d'un projet — et cassaient la page d'accueil globale, ou la
+  # generation d'URL echouait faute de projet.
+  #
+  # skip_permissions_check : ces controleurs ne sont pas enregistres dans
+  # Redmine::AccessControl, donc allowed_node? les rejetait en silence.
+  # L'autorisation est bien verifiee, mais dans chaque controleur
+  # (authorize_view), pas via le registre.
+  #
+  # Les entrees d'origine qu'elles remplacent ne sont pas supprimees : la
+  # navigation reconstruite (PlaneNavHelper) les range dans un bloc
+  # « Vues classiques » replie.
+  # ---------------------------------------------------------------------
+  menu.push :plane_overview,
+            { controller: "/plane_overview", action: "index" },
+            caption: "Aperçu",
+            icon: "home",
+            first: true,
+            skip_permissions_check: true
+
+  menu.push :plane_work,
+            { controller: "/plane_work", action: "index" },
+            caption: "Travail",
+            icon: "stack",
+            after: :plane_overview,
+            skip_permissions_check: true
+
+  menu.push :plane_gantt,
+            { controller: "/plane_gantt", action: "index" },
+            caption: "Frise",
+            icon: "project",
+            after: :plane_work,
+            skip_permissions_check: true
+
   menu.push :activity,
             { controller: "/activities", action: "index" },
             if: ->(project) { project.module_enabled?("activity") },

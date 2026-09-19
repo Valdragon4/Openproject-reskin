@@ -1,0 +1,303 @@
+// Aperçu projet — page reconstruite.
+//
+// Une question, une reponse qui descend du general au particulier.
+// La page n'est pas une grille de widgets equivalents : elle a une tete
+// (les chiffres), un corps (l'avancement, les retards, la repartition) et
+// un pied (l'equipe). Chaque bloc gagne sa place en repondant a un morceau
+// de la question « ou en est ce projet ».
+
+.op-plane-ov
+  max-width: 1180px
+  margin-inline: auto
+  padding-inline: 20px
+  padding-block: 20px 64px
+  display: flex
+  flex-direction: column
+  gap: 24px
+
+// ------------------------------------------------------------- En-tete
+.op-plane-ov--head
+  display: flex
+  align-items: flex-start
+  justify-content: space-between
+  gap: 16px
+  flex-wrap: wrap
+
+.op-plane-ov--title
+  margin: 0
+  font-size: 1.5rem
+  font-weight: 650
+  letter-spacing: -.022em
+  color: var(--plane-n-1200)
+
+.op-plane-ov--desc
+  margin: 4px 0 0
+  max-width: 62ch
+  font-size: 13px
+  line-height: 1.55
+  color: var(--plane-n-1000)
+
+.op-plane-ov--views
+  display: inline-flex
+  padding: 2px
+  gap: 2px
+  background: var(--plane-n-300)
+  border-radius: 8px
+  flex: 0 0 auto
+
+.op-plane-ov--view
+  padding: 5px 12px
+  border-radius: 6px
+  font-size: 12px
+  font-weight: 500
+  color: var(--plane-n-1000)
+  text-decoration: none
+  transition: background-color 140ms cubic-bezier(.2, .7, .3, 1), color 140ms cubic-bezier(.2, .7, .3, 1)
+
+  &:hover
+    color: var(--plane-n-1200)
+    background: var(--plane-n-200)
+
+  &.is-current
+    background: var(--plane-surface)
+    color: var(--plane-n-1200)
+    box-shadow: 0 1px 2px -1px rgb(41 47 61 / .12)
+
+// --------------------------------------------------------- Les chiffres
+// Quatre nombres alignes, sans cadre autour de chacun : ce sont des
+// valeurs comparables, pas quatre objets distincts. Un seul filet les
+// separe, et seul le retard porte une couleur.
+.op-plane-ov--stats
+  display: grid
+  grid-template-columns: repeat(4, minmax(0, 1fr))
+  border: 1px solid var(--plane-n-400)
+  border-radius: 10px
+  overflow: hidden
+  background: var(--plane-surface)
+
+  @media (max-width: 720px)
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+
+.op-plane-ov--stat
+  display: flex
+  flex-direction: column
+  gap: 2px
+  padding: 16px 18px
+  border-right: 1px solid var(--plane-n-400)
+
+  &:last-child
+    border-right: 0
+
+  &.-alert .op-plane-ov--stat-value
+    color: var(--plane-bar-overdue, #C4564A)
+
+.op-plane-ov--stat-value
+  font-size: 1.625rem
+  font-weight: 650
+  line-height: 1.1
+  letter-spacing: -.02em
+  font-variant-numeric: tabular-nums
+  color: var(--plane-n-1200)
+
+.op-plane-ov--stat-label
+  font-size: 12px
+  color: var(--plane-n-1000)
+
+// ----------------------------------------------------------- Avancement
+.op-plane-ov--progress-block
+  display: flex
+  flex-direction: column
+  gap: 8px
+
+.op-plane-ov--progress-head
+  display: flex
+  align-items: baseline
+  justify-content: space-between
+
+.op-plane-ov--progress-label
+  font-size: 13px
+  font-weight: 600
+  color: var(--plane-n-1200)
+
+.op-plane-ov--progress-value
+  font-size: 13px
+  font-variant-numeric: tabular-nums
+  color: var(--plane-n-1000)
+
+.op-plane-ov--progress
+  height: 8px
+  border-radius: 999px
+  background: var(--plane-n-400)
+  overflow: hidden
+
+.op-plane-ov--progress-fill
+  display: block
+  height: 100%
+  width: var(--fill, 0%)
+  border-radius: 999px
+  background: var(--plane-brand)
+
+.op-plane-ov--progress-note
+  margin: 0
+  font-size: 12px
+  color: var(--plane-n-1000)
+
+// -------------------------------------------------------------- Panneaux
+.op-plane-ov--cols
+  display: grid
+  grid-template-columns: repeat(2, minmax(0, 1fr))
+  gap: 20px
+
+  @media (max-width: 860px)
+    grid-template-columns: minmax(0, 1fr)
+
+.op-plane-ov--panel
+  background: var(--plane-surface)
+  border: 1px solid var(--plane-n-400)
+  border-radius: 10px
+  padding: 16px 18px
+
+.op-plane-ov--panel-title
+  display: flex
+  align-items: center
+  gap: 8px
+  margin: 0 0 12px
+  font-size: 13px
+  font-weight: 600
+  color: var(--plane-n-1200)
+
+.op-plane-ov--badge
+  font-size: 11px
+  font-weight: 500
+  padding: 1px 7px
+  border-radius: 999px
+  background: var(--plane-n-300)
+  color: var(--plane-n-1000)
+  font-variant-numeric: tabular-nums
+
+  &.-alert
+    background: color-mix(in oklab, var(--plane-bar-overdue, #C4564A) 14%, transparent)
+    color: var(--plane-bar-overdue, #C4564A)
+
+.op-plane-ov--none
+  margin: 0
+  font-size: 13px
+  color: var(--plane-n-1000)
+
+// ------------------------------------------------------------- Retards
+.op-plane-ov--list
+  margin: 0
+  padding: 0
+  list-style: none
+
+.op-plane-ov--item
+  display: flex
+  align-items: center
+  gap: 10px
+  height: 32px
+  padding-inline: 6px
+  margin-inline: -6px
+  border-radius: 6px
+  text-decoration: none
+  color: inherit
+  transition: background-color 120ms cubic-bezier(.2, .7, .3, 1)
+
+  &:hover
+    background: var(--plane-n-200)
+
+.op-plane-ov--item-id
+  flex: 0 0 auto
+  min-width: 30px
+  font-size: 12px
+  font-variant-numeric: tabular-nums
+  color: var(--plane-n-900)
+
+.op-plane-ov--item-subject
+  flex: 1 1 auto
+  min-width: 0
+  font-size: 13px
+  color: var(--plane-n-1200)
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+
+.op-plane-ov--item-date
+  flex: 0 0 auto
+  font-size: 12px
+  font-weight: 600
+  font-variant-numeric: tabular-nums
+  color: var(--plane-bar-overdue, #C4564A)
+
+// ---------------------------------------------------------- Repartition
+// Une barre segmentee plutot qu'un camembert : les proportions se comparent
+// sur un axe, et la barre se lit sans legende quand on survole.
+.op-plane-ov--bar
+  display: flex
+  height: 10px
+  border-radius: 999px
+  overflow: hidden
+  background: var(--plane-n-300)
+  margin-bottom: 14px
+
+.op-plane-ov--bar-seg
+  width: var(--seg, 0%)
+  background: var(--tint, var(--plane-n-700))
+
+.op-plane-ov--legend
+  margin: 0
+  padding: 0
+  list-style: none
+  display: flex
+  flex-direction: column
+  gap: 6px
+
+.op-plane-ov--legend-row
+  display: flex
+  align-items: center
+  gap: 8px
+  font-size: 13px
+
+.op-plane-ov--dot
+  width: 8px
+  height: 8px
+  flex: 0 0 auto
+  border-radius: 999px
+  background: var(--tint, var(--plane-n-700))
+
+.op-plane-ov--legend-name
+  flex: 1 1 auto
+  min-width: 0
+  color: var(--plane-n-1100)
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+
+.op-plane-ov--legend-count
+  flex: 0 0 auto
+  font-variant-numeric: tabular-nums
+  color: var(--plane-n-1000)
+
+// --------------------------------------------------------------- Equipe
+.op-plane-ov--people
+  margin: 0
+  padding: 0
+  list-style: none
+  display: flex
+  flex-wrap: wrap
+  gap: 8px
+
+.op-plane-ov--person
+  display: inline-flex
+  align-items: center
+  gap: 7px
+  padding: 4px 10px 4px 4px
+  border: 1px solid var(--plane-n-400)
+  border-radius: 999px
+  font-size: 12px
+  color: var(--plane-n-1100)
+
+  img,
+  .op-avatar
+    width: 20px
+    height: 20px
+    border-radius: 999px

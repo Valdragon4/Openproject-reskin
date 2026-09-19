@@ -1,0 +1,45 @@
+<%#
+  Navigation de projet reconstruite.
+
+  ON NE REUTILISE PAS render_menu_node.
+  Ce composant rend l'entree ET son sous-menu deroulant, ligne de retour
+  « ← » comprise. C'est le mecanisme de navigation en profondeur
+  d'OpenProject, masque par son propre CSS dans son menu d'origine — mais
+  dans des sections a plat, tout ressortait et chaque entree apparaissait
+  deux fois, plus un lien vide.
+
+  On rend donc les liens nous-memes : extract_node_details fournit le
+  libelle, l'URL deja resolue et l'etat courant. Une entree, une ligne.
+%>
+<nav class="op-nav" aria-label="<%= t(:label_main_menu) %>">
+  <% plane_nav_sections(@project).each do |label, nodes| %>
+    <% legacy = label == "Vues classiques" %>
+
+    <% if legacy %>
+      <details class="op-nav--section op-nav--section_legacy">
+        <summary class="op-nav--label op-nav--label_toggle"><span><%= label %></span></summary>
+        <ul class="op-nav--list">
+          <%= render partial: "layouts/plane_nav_item", collection: nodes, as: :node %>
+        </ul>
+      </details>
+    <% else %>
+      <div class="op-nav--section">
+        <% if label.present? %>
+          <div class="op-nav--label"><%= label %></div>
+        <% end %>
+        <ul class="op-nav--list">
+          <%= render partial: "layouts/plane_nav_item", collection: nodes, as: :node %>
+        </ul>
+      </div>
+    <% end %>
+  <% end %>
+
+  <% footer = plane_nav_footer(@project) %>
+  <% if footer.any? %>
+    <div class="op-nav--section op-nav--section_footer">
+      <ul class="op-nav--list">
+        <%= render partial: "layouts/plane_nav_item", collection: footer, as: :node %>
+      </ul>
+    </div>
+  <% end %>
+</nav>

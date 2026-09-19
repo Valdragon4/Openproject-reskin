@@ -1,0 +1,32 @@
+<%#
+  Une ligne de lot de travaux, hors du contexte d'un projet.
+
+  Elle apparait sur l'Accueil, sur Mon travail et sur les listes
+  transverses. La recopier a chaque fois aurait produit trois densites et
+  trois formats de date — le defaut qu'on corrige ailleurs.
+
+  locals : wp
+%>
+<li class="op-plane-list--row">
+  <%= link_to work_package_path(wp), class: "op-plane-list--link" do %>
+    <span class="op-plane-list--dot"
+          style="--dot: <%= wp.status&.color&.hexcode || "#94A3AE" %>"
+          title="<%= wp.status&.name %>"></span>
+
+    <span class="op-plane-list--id"><%= wp.id %></span>
+    <span class="op-plane-list--name"><%= wp.subject %></span>
+
+    <span class="op-plane-list--right">
+      <% if wp.project %>
+        <span class="op-plane-list--chip"><%= wp.project.name %></span>
+      <% end %>
+      <% if wp.due_date %>
+        <%# En retard : l'echeance passe en rouge ET en gras. La couleur
+            seule ne se lit pas en niveaux de gris ni en daltonisme. %>
+        <span class="op-plane-list--date <%= "-late" if wp.due_date < Date.current && !wp.status&.is_closed? %>">
+          <%= format_date(wp.due_date) %>
+        </span>
+      <% end %>
+    </span>
+  <% end %>
+</li>

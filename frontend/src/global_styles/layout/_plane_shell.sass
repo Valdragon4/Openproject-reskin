@@ -1,0 +1,391 @@
+// Coquille applicative facon Plane.
+//
+// Plane n'a pas de bandeau superieur. Le chrome et la navigation vivent dans
+// une seule barre laterale ; le contenu occupe tout le reste et devient la
+// surface qui porte l'attention.
+//
+// Ce fichier met en forme les blocs reloges par PlaneShellHelper :
+//   .op-plane-sidebar--brand    en-tete : gaufre, logo, utilisateur
+//   .op-plane-sidebar--actions  recherche + ajout rapide
+//   .op-plane-sidebar--footer   notifications + aide
+//   .op-plane-mobile-bar        bandeau compact, mobile uniquement
+
+$plane-shell-breakpoint: 680px
+
+// --------------------------------------------------- Bandeau : desktop
+// Le bandeau ne subsiste qu'au telephone. Au-dela du point de rupture il
+// disparait completement et sa hauteur est rendue au contenu.
+// On se contente de masquer le bandeau : en display:none il ne reserve plus
+// aucune place. Surtout, on ne met PAS --header-height a zero globalement —
+// .op-logo, .top-menu-search et d'autres composants en tirent leur hauteur et
+// se replieraient a zero une fois sortis du bandeau.
+@media screen and (min-width: $plane-shell-breakpoint)
+  .op-app-header_mobile-only
+    display: none !important
+
+  // Masquer le bandeau ne suffisait pas : deux conteneurs continuaient de
+  // lui reserver sa hauteur — #content-wrapper et #menu-sidebar sont
+  // dimensionnes en calc(100dvh - var(--header-height)). La coquille
+  // s'arretait donc 48 px au-dessus du bas de la fenetre et le fond du
+  // corps apparaissait dessous, en bande claire sur toute la largeur.
+  //
+  // On ne remet surtout PAS --header-height a zero (voir ci-dessus) : on
+  // corrige les deux hauteurs, la ou le bandeau n'occupe plus de place.
+  // #main-menu #menu-sidebar et non #menu-sidebar seul : _main_menu.sass
+  // declare la regle imbriquee, donc a (0,2,0). Un selecteur a (0,1,0)
+  // perdait, et la laterale restait 48 px trop courte pendant que le
+  // contenu, lui, etait corrige.
+  #content-wrapper,
+  #main-menu #menu-sidebar
+    height: 100dvh
+
+// --------------------------------------------------- Bandeau : mobile
+.op-plane-mobile-bar
+  display: flex
+  align-items: center
+  gap: 8px
+
+// --------------------------------------------------- Laterale : en-tete
+.op-plane-sidebar--brand
+  // Les composants deplaces ici lisent --header-height pour se dimensionner.
+  // On la redefinit localement au lieu de corriger chaque composant.
+  --header-height: 32px
+
+  display: flex
+  align-items: center
+  gap: 4px
+  padding: 8px 10px 4px
+  min-height: 44px
+
+  // Le logo d'OpenProject est un asset blanc, dessine pour le bandeau bleu.
+  // Sur la laterale claire il serait invisible : on le ramene au noir. En
+  // mode sombre il reste blanc — le filtre est porte par un token, pas
+  // applique en dur (une inversion inconditionnelle rendait le logo noir
+  // sur noir).
+  .op-logo--link,
+  .op-logo--icon
+    filter: var(--plane-logo-filter, none)
+
+  // Le logo prend la place libre entre la gaufre et l'avatar.
+  .op-plane-sidebar--brand-logo
+    flex: 1 1 auto
+    min-width: 0
+    overflow: hidden
+
+    // .op-logo est cale sur 130px de large dans le bandeau ; dans une
+    // laterale de 255px partagee avec la gaufre et l'avatar, il doit se
+    // contenter de la place restante.
+    .op-logo
+      width: 100%
+      max-width: 100%
+      margin: 0
+
+    .op-logo--link
+      margin: 0
+      height: 100%
+      background-position: left center
+      background-size: contain
+
+  .op-plane-sidebar--brand-modules,
+  .op-plane-sidebar--brand-user
+    flex: 0 0 auto
+    display: flex
+    align-items: center
+
+// --------------------------------------------------- Laterale : actions
+.op-plane-sidebar--actions
+  // Idem : .top-menu-search tire sa hauteur et son line-height d'ici.
+  --header-height: 32px
+
+  display: flex
+  align-items: center
+  gap: 6px
+  padding: 4px 10px 8px
+
+  // La recherche occupe la largeur ; le bouton de creation garde sa taille.
+  .op-plane-sidebar--search
+    flex: 1 1 auto
+    min-width: 0
+
+    .op-app-search
+      width: 100%
+
+    // L'hote du composant Angular est en display:inline par defaut : hors du
+    // bandeau, plus rien ne lui donne de boite, il se replie a 0x0.
+    opce-global-search
+      display: block
+      width: 100%
+
+    // Le champ est cale sur calc(300px + 3vw), pensee pour un bandeau pleine
+    // largeur : dans la laterale il deborde et se fait couper. On le ramene
+    // a la largeur disponible.
+    .top-menu-search
+      width: 100%
+      margin: 0
+
+    .op-autocompleter,
+    .global-search,
+    .top-menu-search--input,
+    .ng-select
+      width: 100% !important
+      max-width: 100%
+
+  .op-plane-sidebar--quick-add
+    flex: 0 0 auto
+
+// ------------------------------------------- Menu « + » : reconstruit
+// Une entree = UN element cliquable, donc UNE surface au survol. Le
+// composant Primer en empilait trois (item, contenu, libelle) et plusieurs
+// recevaient un fond : on voyait deux surbrillances emboitees sur la meme
+// ligne.
+.op-plane-add
+  position: relative
+
+  &[open] > .op-plane-add--trigger
+    background: var(--plane-brand-active)
+
+// <summary> porte un marqueur natif qu'il faut neutraliser dans les deux
+// syntaxes : `list-style` pour les navigateurs recents, le pseudo-element
+// -webkit pour les autres.
+.op-plane-add--trigger
+  display: flex
+  align-items: center
+  gap: 2px
+  height: 32px
+  padding-inline: 8px
+  border-radius: 6px
+  background: var(--plane-brand)
+  color: var(--plane-brand-fg)
+  cursor: pointer
+  list-style: none
+  user-select: none
+
+  &::-webkit-details-marker
+    display: none
+
+  &:hover
+    background: var(--plane-brand-hover)
+
+  &:focus-visible
+    outline: 2px solid var(--plane-brand)
+    outline-offset: 2px
+
+.op-plane-add--plus
+  flex: 0 0 auto
+
+.op-plane-add--caret
+  width: 8px
+  height: 8px
+  flex: 0 0 auto
+  background: currentColor
+  clip-path: polygon(50% 78%, 6% 26%, 18% 14%, 50% 50%, 82% 14%, 94% 26%)
+
+// ATTENTION — le panneau NE PEUT PAS etre en position: absolute.
+// Il vit dans #menu-sidebar, qui defile verticalement. Un conteneur qui
+// defile rogne tout ce qui le depasse : le menu etait coupe net au bord
+// droit de la laterale, et les types de lots disparaissaient a moitie.
+//
+// position: fixed le sort du conteneur de defilement. En contrepartie il
+// n'est plus ancre a son declencheur : ses coordonnees sont posees a
+// l'ouverture par le script de la coquille (voir layouts/base), qui lit la
+// position reelle du bouton.
+.op-plane-add--panel
+  position: fixed
+  z-index: 40
+  min-width: 216px
+  padding: 6px
+  border: 1px solid var(--plane-n-500)
+  border-radius: 8px
+  background: var(--plane-surface)
+  box-shadow: 0 8px 16px -4px rgb(41 47 61 / .10), 0 16px 32px -8px rgb(41 47 61 / .10)
+
+.op-plane-add--item
+  display: flex
+  align-items: center
+  gap: 9px
+  min-height: 32px
+  padding-inline: 9px
+  border-radius: 6px
+  font-size: 13px
+  color: var(--plane-n-1200)
+  text-decoration: none
+
+  &:hover
+    background: var(--plane-canvas)
+    color: var(--plane-n-1200)
+    text-decoration: none
+
+  &:focus-visible
+    outline: 2px solid var(--plane-brand)
+    outline-offset: -2px
+
+.op-plane-add--icon
+  flex: 0 0 auto
+  color: var(--plane-n-900)
+
+.op-plane-add--label
+  flex: 1 1 auto
+  min-width: 0
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+
+.op-plane-add--sep
+  height: 1px
+  margin: 6px 4px
+  background: var(--plane-n-500)
+
+.op-plane-add--heading
+  padding: 2px 9px 4px
+  font-size: 10.5px
+  font-weight: 600
+  letter-spacing: .06em
+  text-transform: uppercase
+  color: var(--plane-n-900)
+
+// --------------------------------------------------- Laterale : pied
+// Pousse en bas de la colonne : #menu-sidebar devient une colonne flex dont
+// le pied porte margin-top:auto. Le bloc central reste seul a defiler.
+// #main-menu est transparent d'origine : le canvas de la laterale doit etre
+// peint explicitement, sinon elle emprunte le blanc du contenu.
+#main-menu
+  background: var(--plane-sidebar-bg)
+  border-right: 1px solid var(--plane-sidebar-border)
+
+#menu-sidebar
+  display: flex
+  flex-direction: column
+  background: var(--plane-sidebar-bg)
+
+  .main-menu--top-container,
+  .op-plane-sidebar--brand,
+  .op-plane-sidebar--actions,
+  .op-plane-sidebar--footer
+    flex: 0 0 auto
+
+.op-plane-sidebar--footer
+  margin-top: auto
+  display: flex
+  align-items: center
+  gap: 4px
+  padding: 8px 10px
+  border-top: 1px solid var(--main-menu-border-color)
+
+// ============================================================ NAVIGATION
+// Les items de la laterale sont des composants Primer ActionList, pas des
+// <li><a>. Cibler li > a ne touchait que le menu global, masque : d'ou une
+// laterale restee inchangee malgre les regles precedentes.
+//
+// La laterale recoit sa PROPRE famille de tokens, distincte de la surface
+// de contenu — convention reprise du systeme shadcn/ui, ou --sidebar-* vit
+// separement de --background. Une colonne de navigation n'est pas une
+// surface de contenu : elle a son fond, son accent et son filet.
+
+$plane-gutter: 8px
+
+body[data-color-mode][data-light-theme],
+body[data-color-mode][data-dark-theme]
+  --plane-sidebar-bg:        var(--plane-n-300)
+  --plane-sidebar-fg:        var(--plane-n-1100)
+  --plane-sidebar-fg-muted:  var(--plane-n-1000)
+  --plane-sidebar-accent:    #E4E6E9
+  --plane-sidebar-accent-fg: var(--plane-n-1200)
+  --plane-sidebar-border:    var(--plane-n-400)
+
+body[data-color-mode="dark"][data-dark-theme]
+  --plane-sidebar-bg:        #0F0F10
+  --plane-sidebar-fg:        var(--plane-n-1100)
+  --plane-sidebar-fg-muted:  var(--plane-n-1000)
+  --plane-sidebar-accent:    #22262A
+  --plane-sidebar-accent-fg: var(--plane-n-1200)
+  --plane-sidebar-border:    var(--plane-n-400)
+
+#main-menu
+  // Ligne d'item : 32px, rayon court, retrait lateral commun a toute la
+  // colonne. La pastille de survol respire au lieu de courir d'un bord
+  // a l'autre.
+  .ActionListContent
+    min-height: 32px
+    margin-inline: $plane-gutter
+    padding-inline: 10px
+    border-radius: 6px
+    color: var(--plane-sidebar-fg)
+    transition: background-color 120ms cubic-bezier(.2, .7, .3, 1), color 120ms cubic-bezier(.2, .7, .3, 1)
+
+    &:hover
+      background: var(--plane-sidebar-accent)
+      color: var(--plane-sidebar-accent-fg)
+
+  .ActionListItem-label
+    font-size: 13px
+
+  // L'icone recule : elle situe l'item, elle ne le nomme pas.
+  .ActionListItem-visual
+    color: var(--plane-sidebar-fg-muted)
+
+  // Etat courant : surface teintee et graisse, pas un aplat colore. Primer
+  // marque la page active avec aria-current et --navActive.
+  .ActionListItem--navActive > .ActionListContent,
+  .ActionListContent[aria-current]:not([aria-current="false"])
+    background: var(--plane-sidebar-accent)
+    color: var(--plane-sidebar-accent-fg)
+    font-weight: 600
+
+    .ActionListItem-visual
+      color: var(--plane-sidebar-accent-fg)
+
+  // Libelles de section : capitale reduite, tracking, aligne sur le TEXTE
+  // des items et non sur le bord de la colonne — sinon le regard percoit
+  // deux marges gauches.
+  .ActionList-sectionDivider-title,
+  .op-sidemenu--title,
+  .op-menu--headline
+    padding-inline: calc(#{$plane-gutter} + 10px)
+    font-size: 11px
+    font-weight: 600
+    letter-spacing: .04em
+    text-transform: uppercase
+    color: var(--plane-sidebar-fg-muted)
+
+  // Le chevron de sous-menu ne se montre qu'au survol : au repos il
+  // encombrait chaque ligne d'une fleche inutile.
+  .main-menu--navigation-toggler
+    opacity: 0
+    transition: opacity 120ms cubic-bezier(.2, .7, .3, 1)
+
+  .ActionListItem:hover .main-menu--navigation-toggler,
+  .main-menu--navigation-toggler:focus-visible
+    opacity: .7
+
+// Sous-menus : meme rythme que la colonne. Les items a icone et ceux sans
+// partagent le meme retrait, sinon la liste parait desalignee.
+.ActionListWrap,
+.dropdown-menu,
+.ng-dropdown-panel
+  padding-block: 6px
+
+  // Le bloc d'actions de la laterale redefinit --header-height a 32px pour
+  // dimensionner la recherche. Cette valeur fuit dans les menus deroulants,
+  // ou plusieurs regles d'OpenProject font line-height: var(--header-height) :
+  // le conteneur d'item passait a 32px pendant que le libelle gardait ses
+  // 21px. On coupe l'heritage a la racine du menu.
+  line-height: normal
+
+  // align-items ne suffisait pas : en grille il centre l'element DANS sa
+  // rangee, mais la rangee elle-meme reste collee en haut. C'est
+  // align-content qui repartit la hauteur libre.
+  .ActionListContent
+    align-items: center
+    align-content: center
+
+  .ActionList-sectionDivider-title
+    padding-inline: 14px
+
+// ------------------------------------------- Pastilles de type, mode sombre
+// OpenProject calcule color: hsl(H, S, L - L*0.22) — il ASSOMBRIT de 22 %,
+// ce qui convient a un fond clair et tombe sous 3:1 sur fond sombre. On
+// ecrit le miroir de sa propre formule a partir des variables --color-h/s/l
+// qu'il expose sur l'element, avec un plancher de luminosite. Toute couleur
+// configuree par un administrateur reste donc honoree.
+body[data-color-mode="dark"][data-dark-theme] [class*="__hl_inline_type"]
+  color: hsl(var(--color-h) calc(var(--color-s) * 1%) calc(max(var(--color-l) + (100 - var(--color-l)) * 0.45, 66) * 1%)) !important

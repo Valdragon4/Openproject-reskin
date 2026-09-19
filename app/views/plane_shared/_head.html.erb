@@ -1,0 +1,29 @@
+<%#
+  En-tete commun aux pages reconstruites.
+
+  Chaque page porte un lien « vue d'origine » : la refonte ajoute une
+  lecture, elle ne confisque jamais l'outil d'analyse correspondant. Ce
+  lien est un parametre obligatoire du partial pour que l'oubli se voie.
+
+  locals :
+    titre         — titre de la page
+    sous_titre    — une ligne de contexte (facultatif)
+    origine_label — libelle du lien vers la page d'origine
+    origine_path  — son adresse
+    actions       — HTML additionnel colle a droite (facultatif)
+%>
+<header class="op-plane-page--head">
+  <div>
+    <h1 class="op-plane-page--title"><%= titre %></h1>
+    <% if local_assigns[:sous_titre].present? %>
+      <p class="op-plane-page--subtitle"><%= sous_titre %></p>
+    <% end %>
+  </div>
+
+  <div class="op-plane-page--tools">
+    <%= local_assigns[:actions] %>
+    <% if local_assigns[:origine_path].present? %>
+      <%= link_to origine_label, origine_path, class: "op-plane-page--secondary" %>
+    <% end %>
+  </div>
+</header>

@@ -1,0 +1,413 @@
+<%#
+  Frise — construite de zero.
+
+  Un seul conteneur defile. La colonne de gauche est collante a gauche,
+  l'en-tete collant en haut : la synchronisation est donc structurelle, pas
+  pilotee par du JavaScript.
+
+  L'echelle est une grille CSS de N colonnes-jour. Chaque barre se pose en
+  grid-column: <debut> / span <duree>. Aucun calcul de pixel dans la vue.
+%>
+<% html_title "Frise", (@project&.name || "Tous les projets") %>
+
+<div class="op-gantt"
+     style="--gantt-days: <%= @days&.size || 0 %>; --gantt-day-w: <%= @day_width %>px">
+
+  <header class="op-gantt--head">
+    <div>
+      <h1 class="op-gantt--title">Frise</h1>
+      <p class="op-gantt--sub">
+        <% if @days.present? %>
+          <%= l(@range_start, format: "%-d %B %Y") %> — <%= l(@range_end, format: "%-d %B %Y") %>
+          <span class="op-gantt--sub-count"><%= @days.size %> jours</span>
+          <%# La fenetre deduite des donnees et une fenetre choisie a la main
+              se lisent pareil : sans cette mention, impossible de savoir
+              laquelle des deux on regarde. %>
+          <% if @custom_range %>
+            <span class="op-gantt--sub-flag">période choisie</span>
+          <% end %>
+        <% else %>
+          Aucune date planifiée
+        <% end %>
+      </p>
+    </div>
+
+    <div class="op-gantt--tools">
+      <nav class="op-gantt--zoom" aria-label="Échelle">
+        <%# Le zoom conserve la fenetre courante : changer d'echelle ne doit
+            pas renvoyer l'utilisateur a la periode par defaut. %>
+        <% PlaneGanttController::ZOOM.each_key do |z| %>
+          <%= link_to z.capitalize,
+                      plane_page_path(:gantt, @project,
+                                      zoom: z, from: params[:from].presence, to: params[:to].presence),
+                      class: "op-gantt--zoom-btn #{"is-current" if z == @zoom}",
+                      "aria-current": (z == @zoom ? "page" : nil) %>
+        <% end %>
+      </nav>
+
+      <nav class="op-gantt--views" aria-label="Vues">
+        <% plane_view_switcher(:gantt).each do |page, label, courante| %>
+          <% if courante %>
+            <span class="op-gantt--view is-current" aria-current="page"><%= label %></span>
+          <% else %>
+            <%= link_to label, plane_page_path(page), class: "op-gantt--view" %>
+          <% end %>
+        <% end %>
+      </nav>
+    </div>
+  </header>
+
+  <%# ---- Barre de periode ----
+      Deplacement et choix de fenetre, entierement cote serveur : chaque
+      commande est un LIEN, donc une URL partageable, un favori possible et
+      un retour arriere du navigateur qui fonctionne. Le raisonnement complet
+      est dans PlaneGanttController#read_window.
+      Elle n'apparait que s'il y a une echelle : sans une seule date au monde,
+      il n'y a rien a parcourir. %>
+  <% if @days.present? %>
+    <%
+      today = Date.current
+      raccourcis = [
+        ["Ce mois-ci",   today.beginning_of_month,   today.end_of_month],
+        ["Ce trimestre", today.beginning_of_quarter, today.end_of_quarter],
+        ["Cette année",  today.beginning_of_year,    today.end_of_year]
+      ]
+      raccourcis << ["Tout", @data_min, @data_max] if @data_min && @data_max
+    %>
+    <div class="op-gantt--timebar">
+
+      <nav class="op-gantt--move" aria-label="Déplacement dans le temps">
+        <%= link_to plane_page_path(:gantt, @project, **plane_gantt_window_options(from: @prev_from, to: @prev_to)),
+                    class: "op-gantt--move-btn",
+                    title: "Période précédente",
+                    "aria-label": "Période précédente" do %>
+          <span aria-hidden="true">‹</span>
+        <% end %>
+
+        <%# « Aujourd'hui » conserve la largeur de fenetre en cours et la
+            recentre : on change de position, pas de niveau de detail. %>
+        <%= link_to "Aujourd'hui",
+                    plane_page_path(:gantt, @project, **plane_gantt_window_options(from: @today_from, to: @today_to)),
+                    class: "op-gantt--move-btn -wide" %>
+
+        <%= link_to plane_page_path(:gantt, @project, **plane_gantt_window_options(from: @next_from, to: @next_to)),
+                    class: "op-gantt--move-btn",
+                    title: "Période suivante",
+                    "aria-label": "Période suivante" do %>
+          <span aria-hidden="true">›</span>
+        <% end %>
+      </nav>
+
+      <%# Formulaire GET : les champs deviennent les parametres d'URL tels
+          quels, aucune redirection intermediaire. type="date" rend le format
+          ISO attendu par le controleur. %>
+      <%= form_with url: plane_page_path(:gantt, @project), method: :get, class: "op-gantt--period" do %>
+        <%= hidden_field_tag :zoom, @zoom %>
+        <label class="op-gantt--period-label" for="gantt-from">Du</label>
+        <%= date_field_tag :from, @custom_range ? @range_start.strftime("%Y-%m-%d") : nil,
+                           id: "gantt-from", class: "op-gantt--date" %>
+        <label class="op-gantt--period-label" for="gantt-to">au</label>
+        <%= date_field_tag :to, @custom_range ? @range_end.strftime("%Y-%m-%d") : nil,
+                           id: "gantt-to", class: "op-gantt--date" %>
+        <button type="submit" class="op-plane-page--primary op-gantt--apply">Afficher</button>
+      <% end %>
+
+      <div class="op-gantt--presets">
+        <% raccourcis.each do |libelle, debut, fin| %>
+          <% courant = @custom_range && @range_start == debut && @range_end == fin %>
+          <%= link_to libelle,
+                      plane_page_path(:gantt, @project, **plane_gantt_window_options(from: debut, to: fin)),
+                      class: "op-plane-page--secondary #{"-current" if courant}",
+                      "aria-current": (courant ? "true" : nil) %>
+        <% end %>
+
+        <%# Le retour a la fenetre deduite n'a de sens que si on l'a quittee. %>
+        <% if @custom_range %>
+          <%= link_to "Fenêtre automatique",
+                      plane_page_path(:gantt, @project, **plane_gantt_window_options),
+                      class: "op-plane-page--secondary op-gantt--reset" %>
+        <% end %>
+      </div>
+    </div>
+
+    <% if @window_swapped || @truncated %>
+      <p class="op-gantt--notice">
+        <% if @window_swapped %>
+          Les deux dates étaient inversées&nbsp;: elles ont été remises dans l'ordre.
+        <% end %>
+        <% if @truncated %>
+          Période demandée&nbsp;: <%= @requested_days %> jours. L'affichage est limité à
+          <%= PlaneGanttController::MAX_DAYS %> jours — au-delà, une colonne par jour rend
+          la page illisible et lente. Réduisez la période ou déplacez-vous avec les flèches.
+        <% end %>
+      </p>
+    <% end %>
+  <% end %>
+
+  <% if @groups.blank? %>
+    <div class="op-gantt--empty">
+      <%# Deux vides differents, deux messages differents : « rien n'est
+          daté » se corrige dans les lots, « rien dans cette période » se
+          corrige dans la barre ci-dessus. Un message unique enverrait la
+          moitie des gens au mauvais endroit. %>
+      <% if @custom_range && @days.present? %>
+        <p class="op-gantt--empty-title">Aucun lot sur cette période</p>
+        <p class="op-gantt--empty-body">
+          Rien entre le <%= l(@range_start, format: "%-d %B %Y") %> et le
+          <%= l(@range_end, format: "%-d %B %Y") %>. Élargissez la période, déplacez-vous
+          avec les flèches, ou revenez à la fenêtre automatique.
+        </p>
+      <% else %>
+        <p class="op-gantt--empty-title">Aucun lot de travaux daté</p>
+        <p class="op-gantt--empty-body">
+          Une frise a besoin de dates. Renseignez une date de début ou d'échéance
+          pour voir apparaître les barres.
+        </p>
+      <% end %>
+    </div>
+  <% else %>
+
+    <div class="op-gantt--scroll" id="op-gantt-scroll">
+      <div class="op-gantt--canvas">
+
+        <%# ---- En-tete : bande des mois, puis reperes de jours ---- %>
+        <div class="op-gantt--header-side"></div>
+        <div class="op-gantt--header-time">
+          <div class="op-gantt--months">
+            <% @months.each do |m| %>
+              <div class="op-gantt--month" style="--span: <%= m[:span] %>">
+                <span><%= m[:label] %></span>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="op-gantt--days">
+            <% @days.each_with_index do |day, i| %>
+              <div class="op-gantt--day <%= "-weekend" if day.saturday? || day.sunday? %> <%= "-today" if day == Date.current %>">
+                <% if @day_width >= 24 || day.monday? %>
+                  <span class="op-gantt--day-num"><%= day.day %></span>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <%# ---- Couche des dependances ----
+            Une seule surface SVG posee sur toute la zone de temps. Les
+            tracés sont calcules cote serveur en pixels, a partir de la meme
+            geometrie que les lignes : ils tombent donc exactement sur les
+            barres, sans mesure cote navigateur. La couche ne capte pas la
+            souris, les barres restent cliquables au travers. %>
+        <% if @links.present? %>
+          <%# viewBox en unites-jour sur X, en pixels sur Y, avec
+              preserveAspectRatio="none" : l'horizontale s'etire avec la
+              largeur reelle des colonnes, la verticale reste au pixel pres.
+              vector-effect empeche le trait de s'epaissir a l'etirement. %>
+          <svg class="op-gantt--links"
+               style="--h: <%= @canvas_height %>px"
+               viewBox="0 0 <%= @days.size %> <%= @canvas_height %>"
+               preserveAspectRatio="none"
+               aria-hidden="true">
+            <% @links.each do |link| %>
+              <path d="<%= link[:d] %>"
+                    vector-effect="non-scaling-stroke"
+                    class="op-gantt--link <%= "-blocking" if link[:blocking] %>" />
+            <% end %>
+          </svg>
+        <% end %>
+
+        <%# ---- Corps : un groupe = un intertitre collant + ses lignes ---- %>
+        <% @groups.each do |status, items| %>
+
+          <div class="op-gantt--group-side">
+            <span class="op-gantt--dot" style="--tint: <%= status&.color&.hexcode || "#94A3AE" %>"></span>
+            <span class="op-gantt--group-name"><%= status&.name || "Sans statut" %></span>
+            <span class="op-gantt--group-count"><%= items.size %></span>
+          </div>
+          <div class="op-gantt--group-time"></div>
+
+          <% items.each do |wp| %>
+            <% col, span = plane_gantt_span(wp) %>
+            <% state = plane_gantt_state(wp) %>
+            <% milestone = wp.start_date.blank? || wp.due_date.blank? || wp.start_date == wp.due_date %>
+
+            <div class="op-gantt--row-side">
+              <%= link_to work_package_path(wp), class: "op-gantt--row-link" do %>
+                <span class="op-gantt--row-id"><%= wp.id %></span>
+                <span class="op-gantt--row-name"><%= wp.subject %></span>
+                <%# Hors projet, la colonne de gauche melange des lots de
+                    provenances differentes : sans cette mention, impossible
+                    de savoir a quel projet appartient une barre. Elle reste
+                    sur la meme ligne — la hauteur de ligne est partagee avec
+                    le calcul des connecteurs, la faire varier les decalerait. %>
+                <% if plane_global? %>
+                  <span class="op-gantt--row-project"><%= wp.project&.name %></span>
+                <% end %>
+              <% end %>
+            </div>
+
+            <div class="op-gantt--row-time">
+              <%# Le marqueur du jour traverse chaque ligne : une seule regle,
+                  pas un element flottant a repositionner. %>
+              <% if @today_index %>
+                <span class="op-gantt--today" style="--at: <%= @today_index + 1 %>"></span>
+              <% end %>
+
+              <%# Les barres sont des LIENS : on clique la ou on regarde,
+                  pas seulement sur le nom dans la colonne de gauche. %>
+              <%# aria-label INDISPENSABLE : ces liens n'ont aucun contenu
+                  textuel, un lecteur d'ecran annoncerait « lien » sans rien
+                  d'autre. L'attribut title n'est pas une alternative fiable. %>
+              <% if milestone %>
+                <%= link_to work_package_path(wp),
+                            class: "op-gantt--milestone -#{state}",
+                            style: "--col: #{col}",
+                            title: wp.subject,
+                            "aria-label": "#{wp.subject} — lot #{wp.id}" do %><% end %>
+                <%# Un jalon est un losange de 16 px : aucun texte n'y tient.
+                    Son nom se lit dans la colonne de gauche, sur la meme
+                    ligne — le repeter a cote du losange encombrait la frise. %>
+              <% else %>
+                <%# Le libellé vit DANS la barre, tronqué si besoin.
+                    Il a d'abord ete pose A COTE des barres trop courtes pour
+                    eviter les « Crea… ». C'etait oublier que le nom complet
+                    figure deja dans la colonne de gauche, sur la meme ligne :
+                    le libelle exterieur n'ajoutait rien et couvrait la zone
+                    de temps de texte flottant. %>
+                <%# done_ratio cote modele Ruby ; percentageDone n'existe que dans l'API HAL. %>
+                <%= link_to work_package_path(wp),
+                            class: "op-gantt--bar -#{state}",
+                            style: "--col: #{col}; --span: #{span}; --done: #{[[wp.done_ratio.to_i, 0].max, 100].min}%",
+                            title: wp.subject,
+                            "aria-label": "#{wp.subject} — lot #{wp.id}" do %>
+                  <span class="op-gantt--bar-label"><%= wp.subject %></span>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+
+      </div>
+    </div>
+
+    <%# ---- Barre de defilement horizontale, la notre ----
+        POURQUOI NE PAS SE CONTENTER DE CELLE DU NAVIGATEUR
+        Windows 11 masque les barres de defilement par defaut (« Toujours
+        afficher les barres de defilement » desactive) : Chrome passe alors
+        en barres de SURIMPRESSION, qui ne prennent aucune place et
+        s'effacent des qu'on cesse de defiler. Sur une frise, le deplacement
+        horizontal est la commande principale de la page — elle ne peut pas
+        dependre d'un reglage systeme.
+        Celle-ci est toujours visible quand il y a de quoi defiler, et
+        s'efface quand le navigateur en affiche deja une vraie, pour ne pas
+        en presenter deux. La decision est prise par MESURE, pas devinee. %>
+    <div class="op-gantt--hbar"
+         role="scrollbar"
+         tabindex="0"
+         aria-controls="op-gantt-scroll"
+         aria-orientation="horizontal"
+         aria-label="Défilement horizontal de la frise"
+         aria-valuemin="0"
+         aria-valuemax="100"
+         aria-valuenow="0"
+         hidden>
+      <div class="op-gantt--hbar-thumb"></div>
+    </div>
+  <% end %>
+</div>
+
+<% content_for :additional_js_dom_ready do %>
+  const zone = document.getElementById('op-gantt-scroll');
+  const barre = document.querySelector('.op-gantt--hbar');
+  const pouce = barre && barre.querySelector('.op-gantt--hbar-thumb');
+
+  if (zone && pouce) {
+    const POUCE_MIN = 44; // en dessous, le pouce n'est plus attrapable
+
+    const deborde = () => zone.scrollWidth - zone.clientWidth;
+
+    // La barre horizontale du navigateur est supprimee en CSS : celle-ci la
+    // remplace, sans condition. Il n'y a donc pas de detection a faire — une
+    // premiere version masquait la notre quand le navigateur en affichait
+    // une vraie, mais cette barre-la etait pale, fine et collee au bord de
+    // l'ecran : la « bonne » situation qu'on detectait n'en etait pas une.
+    const ajuster = () => {
+      const reste = deborde();
+      barre.hidden = reste <= 1;
+      if (barre.hidden) return;
+
+      const piste = barre.clientWidth;
+      const largeur = Math.max(POUCE_MIN, Math.round(piste * (zone.clientWidth / zone.scrollWidth)));
+      const course = piste - largeur;
+
+      pouce.style.width = largeur + 'px';
+      pouce.style.transform = 'translateX(' + Math.round((zone.scrollLeft / reste) * course) + 'px)';
+      barre.setAttribute('aria-valuenow', Math.round((zone.scrollLeft / reste) * 100));
+    };
+
+    zone.addEventListener('scroll', ajuster, { passive: true });
+    window.addEventListener('resize', ajuster);
+    ajuster();
+
+    // --- Molette et pave tactile a l'horizontale.
+    // overflow-x: hidden supprime la barre native, mais il supprime AUSSI le
+    // geste horizontal du navigateur. On le reimplante : sans lui, un pave
+    // tactile ne servirait plus a rien sur cette page, ce qui serait une
+    // perte nette par rapport a avant.
+    // passive: false est indispensable — sans lui, preventDefault est ignore
+    // et la page entiere se deplacerait a la place de la frise.
+    zone.addEventListener('wheel', (e) => {
+      const dx = e.deltaX || (e.shiftKey ? e.deltaY : 0);
+      if (!dx) return;
+      const avant = zone.scrollLeft;
+      zone.scrollLeft += dx;
+      if (zone.scrollLeft !== avant) e.preventDefault();
+    }, { passive: false });
+
+    // --- Glisser le pouce.
+    // pointercapture plutot que des ecouteurs sur document : le glissement
+    // continue meme quand le curseur sort de la barre, et se termine seul.
+    let prise = null;
+    pouce.addEventListener('pointerdown', (e) => {
+      prise = { x: e.clientX, depart: zone.scrollLeft };
+      pouce.setPointerCapture(e.pointerId);
+      barre.classList.add('-saisi');
+      e.preventDefault();
+    });
+
+    pouce.addEventListener('pointermove', (e) => {
+      if (!prise) return;
+      const course = barre.clientWidth - pouce.offsetWidth;
+      if (course <= 0) return;
+      zone.scrollLeft = prise.depart + ((e.clientX - prise.x) / course) * deborde();
+    });
+
+    const relacher = () => { prise = null; barre.classList.remove('-saisi'); };
+    pouce.addEventListener('pointerup', relacher);
+    pouce.addEventListener('pointercancel', relacher);
+
+    // --- Cliquer dans la piste : on saute a cet endroit de la frise.
+    barre.addEventListener('pointerdown', (e) => {
+      if (e.target === pouce) return;
+      const r = barre.getBoundingClientRect();
+      zone.scrollLeft = ((e.clientX - r.left) / r.width) * deborde();
+    });
+
+    // --- Clavier. Une barre de defilement qui ne repond pas aux fleches
+    // n'est pas utilisable sans souris.
+    barre.addEventListener('keydown', (e) => {
+      const pas = zone.clientWidth * (e.key === 'PageUp' || e.key === 'PageDown' ? 0.9 : 0.1);
+      const gestes = {
+        ArrowLeft: () => zone.scrollLeft -= pas,
+        ArrowRight: () => zone.scrollLeft += pas,
+        PageUp: () => zone.scrollLeft -= pas,
+        PageDown: () => zone.scrollLeft += pas,
+        Home: () => zone.scrollLeft = 0,
+        End: () => zone.scrollLeft = zone.scrollWidth,
+      };
+      if (!gestes[e.key]) return;
+      gestes[e.key]();
+      e.preventDefault();
+    });
+  }
+<% end %>

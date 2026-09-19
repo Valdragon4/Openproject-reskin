@@ -32,6 +32,35 @@ Rails.application.routes.draw do
   root to: "homescreen#index", as: "home"
   rails_relative_url_root = OpenProject::Configuration["rails_relative_url_root"] || ""
 
+  # ---------------------------------------------------------------------
+  # Pages reconstruites, portee GLOBALE (hors projet).
+  #
+  # Les memes controleurs servent les versions projet, declarees plus bas
+  # dans le scope "projects/:project_id" : sans project_id, PlaneScope
+  # bascule sur l'ensemble des lots visibles. Le menu global peut donc
+  # enfin pointer vers la refonte au lieu des vues d'origine.
+  #
+  # Prefixe /plane/ plutot que /work ou /gantt : ces chemins appartiennent
+  # deja aux modules d'origine, qu'on ne remplace pas.
+  # ---------------------------------------------------------------------
+  scope "plane" do
+    get "home", to: "plane_home#index", as: :plane_home
+    get "my", to: "plane_my#index", as: :plane_my
+    get "time", to: "plane_time#index", as: :plane_time
+    get "projects", to: "plane_projects#index", as: :plane_projects
+    get "work", to: "plane_work#index", as: :plane_work
+    get "gantt", to: "plane_gantt#index", as: :plane_gantt
+    get "boards", to: "plane_boards#index", as: :plane_boards
+    get "meetings", to: "plane_meetings#index", as: :plane_meetings
+    get "news", to: "plane_news#index", as: :plane_news
+    get "wiki", to: "plane_wiki#index", as: :plane_wiki
+    get "costs", to: "plane_costs#index", as: :plane_costs
+  end
+
+  # La racine d'un projet (/projects/:id) est reprise ailleurs : voir
+  # config/initializers/plane_routes.rb. Elle ne peut pas etre declaree ici,
+  # les modules dessinent leurs routes avant ce fichier.
+
   # Route for error pages
   get "/404", to: "errors#not_found"
   get "/422", to: "errors#unacceptable"
@@ -525,6 +554,15 @@ Rails.application.routes.draw do
     # than any other route as it otherwise would
     # work as a catchall for everything under /wiki
     get "wiki" => "wiki#show"
+
+    # Frise construite de zero (voir PlaneGanttController)
+    get "plane-gantt", to: "plane_gantt#index", as: :plane_gantt
+
+    # Apercu projet reconstruit (voir PlaneOverviewController)
+    get "plane-overview", to: "plane_overview#index", as: :plane_overview
+
+    # Vue Travail reconstruite (voir PlaneWorkController)
+    get "plane", to: "plane_work#index", as: :plane_work
 
     resources :work_packages, only: %i[index show] do
       collection do

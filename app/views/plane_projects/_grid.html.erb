@@ -1,0 +1,47 @@
+<%#
+  Grille de cartes. Une carte = un projet, et un seul geste : entrer.
+
+  La destination est l'Apercu reconstruit, pas la page d'origine — sans quoi
+  la refonte s'arreterait au premier clic.
+%>
+<ul class="op-plane-projects--grid">
+  <% projects.each do |project| %>
+    <li class="op-plane-projects--card<%= " -archived" if project.archived? %>">
+      <%= link_to project_plane_overview_path(project), class: "op-plane-projects--card-link" do %>
+        <span class="op-plane-projects--card-head">
+          <span class="op-plane-projects--avatar" aria-hidden="true"><%= project.name.to_s.first(2).upcase %></span>
+          <span class="op-plane-projects--name"><%= project.name %></span>
+        </span>
+
+        <% if project.description.present? %>
+          <span class="op-plane-projects--desc"><%= truncate(project.description.to_s, length: 120) %></span>
+        <% end %>
+
+        <span class="op-plane-projects--meta">
+          <% if project.status_code.present? %>
+            <span class="op-plane-projects--status -<%= project.status_code.tr("_", "-") %>">
+              <%= t("activerecord.attributes.project.status_codes.#{project.status_code}",
+                    default: project.status_code.humanize) %>
+            </span>
+          <% end %>
+
+          <% ouverts = counts[project.id].to_i %>
+          <span class="op-plane-projects--open">
+            <%= ouverts %> <%= ouverts > 1 ? "lots ouverts" : "lot ouvert" %>
+          </span>
+
+          <% if project.archived? %>
+            <span class="op-plane-projects--archived-tag">Archivé</span>
+          <% end %>
+        </span>
+      <% end %>
+
+      <%# Acces direct aux deux autres pages reconstruites : depuis la liste,
+          on sait deja souvent ou l'on va. %>
+      <span class="op-plane-projects--card-actions">
+        <%= link_to "Travail", project_plane_work_path(project), class: "op-plane-projects--card-action" %>
+        <%= link_to "Frise", project_plane_gantt_path(project), class: "op-plane-projects--card-action" %>
+      </span>
+    </li>
+  <% end %>
+</ul>

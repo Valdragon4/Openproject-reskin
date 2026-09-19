@@ -1,0 +1,111 @@
+<%#
+  Accueil reconstruit : ce qui m'attend, dans l'ordre d'urgence.
+
+  Le retard vient avant l'echeance proche, qui vient avant le reste. Aucun
+  bloc a configurer : la page repond a une question fixe.
+%>
+<% html_title "Accueil" %>
+
+<div class="op-plane-page">
+  <%= render partial: "plane_shared/head",
+             locals: {
+               titre: "Bonjour #{current_user.firstname}",
+               sous_titre: l(Date.current, format: "%A %-d %B %Y").capitalize,
+               origine_label: "Accueil d'origine",
+               origine_path: home_path
+             } %>
+
+  <ul class="op-plane-stats">
+    <li class="op-plane-stat">
+      <span class="op-plane-stat--value"><%= @open_count %></span>
+      <span class="op-plane-stat--label">lots ouverts qui me sont assignés</span>
+    </li>
+    <li class="op-plane-stat">
+      <span class="op-plane-stat--value"><%= @late.size %></span>
+      <span class="op-plane-stat--label">en retard</span>
+    </li>
+    <li class="op-plane-stat">
+      <span class="op-plane-stat--value"><%= @soon.size %></span>
+      <span class="op-plane-stat--label">à échéance sous <%= PlaneHomeController::HORIZON %> jours</span>
+    </li>
+    <li class="op-plane-stat">
+      <span class="op-plane-stat--value"><%= @favorites.size %></span>
+      <span class="op-plane-stat--label">projets suivis</span>
+    </li>
+  </ul>
+
+  <% if @favorites.any? %>
+    <section class="op-plane-section">
+      <div class="op-plane-section--head">
+        <h2 class="op-plane-section--title">Mes projets</h2>
+        <%= link_to "Tous les projets", plane_projects_path, class: "op-plane-section--more" %>
+      </div>
+      <ul class="op-plane-cards">
+        <% @favorites.each do |project| %>
+          <li>
+            <%= link_to project_plane_home_path(project), class: "op-plane-card" do %>
+              <span class="op-plane-card--name"><%= project.name %></span>
+              <span class="op-plane-card--meta"><%= truncate(project.description.to_s.presence || "Ouvrir l'aperçu", length: 90) %></span>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <div class="op-plane-split">
+    <section class="op-plane-section">
+      <div class="op-plane-section--head">
+        <h2 class="op-plane-section--title">En retard</h2>
+        <span class="op-plane-section--count"><%= @late.size %></span>
+        <%= link_to "Mon travail", plane_my_path, class: "op-plane-section--more" %>
+      </div>
+      <% if @late.empty? %>
+        <div class="op-plane-empty">
+          <p class="op-plane-empty--title">Rien en retard</p>
+          <p class="op-plane-empty--body">Toutes vos échéances passées sont tenues.</p>
+        </div>
+      <% else %>
+        <ul class="op-plane-list">
+          <%= render partial: "plane_shared/wp_row", collection: @late, as: :wp %>
+        </ul>
+      <% end %>
+    </section>
+
+    <section class="op-plane-section">
+      <div class="op-plane-section--head">
+        <h2 class="op-plane-section--title">À venir</h2>
+        <span class="op-plane-section--count"><%= @soon.size %></span>
+      </div>
+      <% if @soon.empty? %>
+        <div class="op-plane-empty">
+          <p class="op-plane-empty--title">Aucune échéance proche</p>
+          <p class="op-plane-empty--body">
+            Rien à rendre dans les <%= PlaneHomeController::HORIZON %> prochains jours.
+          </p>
+        </div>
+      <% else %>
+        <ul class="op-plane-list">
+          <%= render partial: "plane_shared/wp_row", collection: @soon, as: :wp %>
+        </ul>
+      <% end %>
+    </section>
+  </div>
+
+  <section class="op-plane-section">
+    <div class="op-plane-section--head">
+      <h2 class="op-plane-section--title">Activité récente</h2>
+      <%= link_to "Tout le travail", plane_work_path, class: "op-plane-section--more" %>
+    </div>
+    <% if @recent.empty? %>
+      <div class="op-plane-empty">
+        <p class="op-plane-empty--title">Aucune activité</p>
+        <p class="op-plane-empty--body">Les lots modifiés récemment apparaîtront ici.</p>
+      </div>
+    <% else %>
+      <ul class="op-plane-list">
+        <%= render partial: "plane_shared/wp_row", collection: @recent, as: :wp %>
+      </ul>
+    <% end %>
+  </section>
+</div>

@@ -1,0 +1,25 @@
+# Traductions propres a la refonte.
+#
+# Les traductions francaises d'OpenProject viennent d'un paquet externe
+# (crowdin) qu'on ne modifie pas : un fichier a part evite de perdre nos
+# libelles a la prochaine mise a jour. Les cles ajoutees ici sont nouvelles,
+# elles n'ecrasent donc rien.
+fr:
+  # Libelles de la modale de confirmation maison, celle qui remplace la boite
+  # native du navigateur. Voir ApplicationHelper#plane_confirm_labels.
+  plane_confirm:
+    title: "Confirmation"
+    danger_title: "Confirmation"
+    confirm: "Confirmer"
+    danger_confirm: "Oui, continuer"
+    cancel: "Annuler"
+
+  users:
+    invite_user_modal:
+      plane_bulk:
+        label: "Ou coller une liste d'adresses e-mail"
+        caption: "Séparées par des virgules, des points-virgules ou des retours à la ligne. Elles s'ajoutent aux personnes choisies ci-dessus."
+        invalid: "Ces entrées ne sont pas des adresses e-mail valides : %{list}"
+      plane_none: "Aucune invitation n'a pu être envoyée pour %{project}."
+      plane_all: "%{count} personnes invitées dans %{project}."
+      plane_partial: "%{count} invitations envoyées sur %{total} pour %{project}. Les autres sont déjà membres, ou n'ont pas pu être invitées."

@@ -1,0 +1,27 @@
+<%#
+  Une branche de l'arbre du wiki, rendue recursivement.
+
+  locals : page, by_parent, project, profondeur
+
+  Le partial s'appelle lui-meme pour les enfants. by_parent est deja
+  construit cote controleur : descendre l'arbre ne coute aucune requete.
+%>
+<% enfants = (by_parent[page.id] || []).sort_by { |p| p.title.to_s } %>
+
+<li class="op-plane-tree--node">
+  <div class="op-plane-tree--line" style="--profondeur: <%= profondeur %>">
+    <%= link_to page.title, project_wiki_path(project, page.slug), class: "op-plane-tree--link" %>
+    <% if enfants.any? %>
+      <span class="op-plane-tree--count"><%= enfants.size %></span>
+    <% end %>
+  </div>
+
+  <% if enfants.any? %>
+    <ul class="op-plane-tree--children">
+      <%= render partial: "plane_wiki/branch",
+                 collection: enfants,
+                 as: :page,
+                 locals: { by_parent:, project:, profondeur: profondeur + 1 } %>
+    </ul>
+  <% end %>
+</li>

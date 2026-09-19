@@ -1,0 +1,76 @@
+<%#
+  « Projets » — page reconstruite, portee globale.
+
+  Des cartes, pas un tableau : on vient ici pour ENTRER dans un projet, pas
+  pour comparer des colonnes. Les favoris ouvrent la page, le reste suit
+  l'ordre hierarchique (lft), les archives ferment la marche dans un bloc
+  replie — elles restent joignables, ce que la refonte ne doit jamais
+  retirer.
+
+  La liste filtrable d'origine reste accessible en un clic : tout ce qui
+  releve de l'analyse (filtres, colonnes, export) y vit toujours.
+%>
+<% html_title t(:label_project_plural) %>
+
+<div class="op-plane-projects">
+  <header class="op-plane-projects--head">
+    <div>
+      <h1 class="op-plane-projects--title"><%= t(:label_project_plural) %></h1>
+      <p class="op-plane-projects--subtitle">
+        <%= @total %> <%= @total > 1 ? "projets visibles" : "projet visible" %>
+        <% if @favorites.any? %>· <%= @favorites.size %> en favori<% end %>
+      </p>
+    </div>
+
+    <div class="op-plane-projects--tools">
+      <nav class="op-plane-projects--views" aria-label="Vues">
+        <% plane_view_switcher(:projects).each do |page, label, courante| %>
+          <% if courante %>
+            <span class="op-plane-projects--view is-current" aria-current="page"><%= label %></span>
+          <% else %>
+            <%= link_to label, plane_page_path(page), class: "op-plane-projects--view" %>
+          <% end %>
+        <% end %>
+      </nav>
+
+      <%# Rien n'est retire : la vue analytique d'origine est a un clic. %>
+      <%= link_to "Liste filtrable", projects_path, class: "op-plane-projects--secondary" %>
+      <% if User.current.allowed_globally?(:add_project) %>
+        <%= link_to "Nouveau projet", new_project_path, class: "op-plane-projects--primary" %>
+      <% end %>
+    </div>
+  </header>
+
+  <% if @favorites.any? %>
+    <section class="op-plane-projects--section">
+      <h2 class="op-plane-projects--section-title">Favoris</h2>
+      <%= render partial: "grid", locals: { projects: @favorites, counts: @counts } %>
+    </section>
+  <% end %>
+
+  <section class="op-plane-projects--section">
+    <% if @favorites.any? %>
+      <h2 class="op-plane-projects--section-title">Tous les projets</h2>
+    <% end %>
+
+    <% if @others.empty? && @favorites.empty? %>
+      <div class="op-plane-projects--empty">
+        <p class="op-plane-projects--empty-title">Aucun projet visible</p>
+        <p class="op-plane-projects--empty-body">
+          Les projets dont vous êtes membre apparaîtront ici.
+        </p>
+      </div>
+    <% else %>
+      <%= render partial: "grid", locals: { projects: @others, counts: @counts } %>
+    <% end %>
+  </section>
+
+  <% if @archived.any? %>
+    <details class="op-plane-projects--archived">
+      <summary class="op-plane-projects--section-title op-plane-projects--toggle">
+        Projets archivés <span class="op-plane-projects--count"><%= @archived.size %></span>
+      </summary>
+      <%= render partial: "grid", locals: { projects: @archived, counts: @counts } %>
+    </details>
+  <% end %>
+</div>

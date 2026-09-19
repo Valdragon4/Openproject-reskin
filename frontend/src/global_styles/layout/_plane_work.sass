@@ -1,0 +1,266 @@
+// Vue « Travail » — page reconstruite.
+//
+// Pas de colonnes, pas de bordures de cellule, pas d'en-tete de tableau.
+// Une liste : des sections par statut, des lignes qui se lisent en diagonale,
+// et la creation la ou le regard se trouve deja — au pied du groupe.
+//
+// Densite visee : celle de Plane. Ligne de 36px, typographie de 13px,
+// separateurs en filet, et un seul accent — la ligne survolee.
+
+.op-plane-work
+  --row-height: 36px
+  --gutter: 20px
+
+  max-width: 1180px
+  margin-inline: auto
+  padding-inline: var(--gutter)
+  padding-block: 20px 64px
+
+// ------------------------------------------------------------- En-tete
+.op-plane-work--head
+  display: flex
+  align-items: flex-start
+  justify-content: space-between
+  gap: 16px
+  flex-wrap: wrap
+  margin-bottom: 20px
+
+.op-plane-work--title
+  margin: 0
+  font-size: 1.375rem
+  font-weight: 650
+  letter-spacing: -.02em
+  color: var(--plane-n-1200)
+
+.op-plane-work--subtitle
+  margin: 2px 0 0
+  font-size: 12px
+  color: var(--plane-n-1000)
+  font-variant-numeric: tabular-nums
+
+// Commutateur de vues segmente : trois destinations, une seule courante.
+// Remplace le menu deroulant, qui cachait l'existence des autres vues.
+.op-plane-work--views
+  display: inline-flex
+  padding: 2px
+  gap: 2px
+  background: var(--plane-n-300)
+  border-radius: 8px
+
+.op-plane-work--view
+  padding: 5px 12px
+  border-radius: 6px
+  font-size: 12px
+  font-weight: 500
+  color: var(--plane-n-1000)
+  text-decoration: none
+  transition: background-color 140ms cubic-bezier(.2, .7, .3, 1), color 140ms cubic-bezier(.2, .7, .3, 1)
+
+  &:hover
+    color: var(--plane-n-1200)
+    background: var(--plane-n-200)
+
+  &.is-current
+    background: var(--plane-surface)
+    color: var(--plane-n-1200)
+    box-shadow: 0 1px 2px -1px rgb(41 47 61 / .12)
+
+// -------------------------------------------------------------- Groupes
+.op-plane-work--group
+  margin-bottom: 4px
+
+  & + .op-plane-work--group
+    margin-top: 18px
+
+.op-plane-work--group-head
+  display: flex
+  align-items: center
+  gap: 8px
+  height: 32px
+  padding-inline: 8px
+  border-radius: 6px
+  cursor: pointer
+  list-style: none
+  user-select: none
+
+  &::-webkit-details-marker
+    display: none
+
+  &:hover
+    background: var(--plane-n-200)
+
+// Le chevron tourne : l'etat du groupe se lit sans compter les lignes.
+.op-plane-work--chevron
+  width: 14px
+  height: 14px
+  flex: 0 0 auto
+  background: currentColor
+  color: var(--plane-n-900)
+  clip-path: polygon(35% 22%, 45% 12%, 78% 50%, 45% 88%, 35% 78%, 60% 50%)
+  transition: transform 140ms cubic-bezier(.2, .7, .3, 1)
+
+details[open] > .op-plane-work--group-head .op-plane-work--chevron
+  transform: rotate(90deg)
+
+// La pastille reprend la couleur du statut, seule couleur admise ici.
+.op-plane-work--dot
+  width: 8px
+  height: 8px
+  flex: 0 0 auto
+  border-radius: 999px
+  background: var(--dot, var(--plane-n-700))
+
+.op-plane-work--group-name
+  font-size: 13px
+  font-weight: 600
+  color: var(--plane-n-1200)
+
+.op-plane-work--count
+  font-size: 11px
+  font-weight: 500
+  color: var(--plane-n-1000)
+  background: var(--plane-n-300)
+  padding: 1px 7px
+  border-radius: 999px
+  font-variant-numeric: tabular-nums
+
+// --------------------------------------------------------------- Lignes
+.op-plane-work--list
+  margin: 2px 0 0
+  padding: 0
+  list-style: none
+  border-top: 1px solid var(--plane-n-400)
+
+.op-plane-work--row
+  border-bottom: 1px solid var(--plane-n-400)
+
+.op-plane-work--row-link
+  display: flex
+  align-items: center
+  gap: 10px
+  height: var(--row-height)
+  padding-inline: 8px
+  text-decoration: none
+  color: inherit
+  transition: background-color 120ms cubic-bezier(.2, .7, .3, 1)
+
+  &:hover
+    background: var(--plane-n-200)
+
+.op-plane-work--priority
+  width: 6px
+  height: 6px
+  flex: 0 0 auto
+  border-radius: 999px
+  background: var(--dot, var(--plane-n-700))
+
+.op-plane-work--id
+  flex: 0 0 auto
+  min-width: 34px
+  font-size: 12px
+  font-variant-numeric: tabular-nums
+  color: var(--plane-n-900)
+
+// Le type n'est plus une couleur mais une etiquette neutre : la frise et la
+// liste parlent la meme langue, et le contraste ne depend plus d'un reglage
+// d'administration.
+.op-plane-work--type
+  flex: 0 0 auto
+  font-size: 10px
+  font-weight: 600
+  letter-spacing: .04em
+  text-transform: uppercase
+  color: var(--plane-n-1000)
+  background: var(--plane-n-300)
+  padding: 2px 6px
+  border-radius: 4px
+
+.op-plane-work--subject
+  flex: 1 1 auto
+  min-width: 0
+  font-size: 13px
+  color: var(--plane-n-1200)
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+
+.op-plane-work--due
+  flex: 0 0 auto
+  font-size: 12px
+  color: var(--plane-n-1000)
+  font-variant-numeric: tabular-nums
+
+  // Le retard ne repose pas sur la seule couleur : la graisse double le
+  // signal (WCAG 1.4.1).
+  &.-late
+    color: var(--plane-bar-overdue, #C4564A)
+    font-weight: 600
+
+.op-plane-work--assignee
+  flex: 0 0 auto
+  display: flex
+  align-items: center
+  width: 22px
+
+  img,
+  .op-avatar
+    width: 22px
+    height: 22px
+    border-radius: 999px
+
+.op-plane-work--unassigned
+  width: 22px
+  height: 22px
+  border-radius: 999px
+  border: 1px dashed var(--plane-n-600)
+
+// ------------------------------------------------------- Creation en ligne
+// Discrete au repos, elle se revele au survol du groupe : presente sans
+// occuper l'attention.
+.op-plane-work--add
+  display: inline-flex
+  align-items: center
+  gap: 6px
+  height: var(--row-height)
+  padding-inline: 8px
+  font-size: 13px
+  color: var(--plane-n-900)
+  text-decoration: none
+  opacity: .65
+  transition: opacity 140ms cubic-bezier(.2, .7, .3, 1), color 140ms cubic-bezier(.2, .7, .3, 1)
+
+  &:hover,
+  &:focus-visible
+    opacity: 1
+    color: var(--plane-brand)
+
+details:hover > .op-plane-work--add
+  opacity: 1
+
+// ------------------------------------------------------------ Vide
+.op-plane-work--empty
+  padding: 56px 24px
+  text-align: center
+  border: 1px dashed var(--plane-n-600)
+  border-radius: 10px
+
+.op-plane-work--empty-title
+  margin: 0
+  font-size: 15px
+  font-weight: 600
+  color: var(--plane-n-1200)
+
+.op-plane-work--empty-body
+  margin: 6px 0 18px
+  font-size: 13px
+  color: var(--plane-n-1000)
+
+.op-plane-work--primary
+  display: inline-block
+  padding: 8px 14px
+  border-radius: 6px
+  font-size: 13px
+  font-weight: 500
+  text-decoration: none
+  background: var(--plane-brand)
+  color: var(--plane-brand-fg)

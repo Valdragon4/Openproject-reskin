@@ -1,0 +1,315 @@
+// Page « Projets » — grille de cartes, portee globale.
+//
+// Une carte n'est pas une ligne de tableau mise en boite : elle porte ce
+// qu'on lit avant d'entrer dans un projet — le nom, une phrase, l'etat, la
+// charge ouverte — et rien d'autre. Le reste vit dans le projet.
+
+.op-plane-projects
+  padding: 20px 24px 40px
+  max-width: 1400px
+
+.op-plane-projects--head
+  display: flex
+  align-items: flex-start
+  justify-content: space-between
+  gap: 16px
+  flex-wrap: wrap
+  margin-bottom: 20px
+
+.op-plane-projects--title
+  margin: 0
+  font-size: 20px
+  font-weight: 600
+  line-height: 1.3
+  color: var(--plane-n-1200)
+
+.op-plane-projects--subtitle
+  margin: 2px 0 0
+  font-size: 12.5px
+  color: var(--plane-n-900)
+
+.op-plane-projects--tools
+  display: flex
+  align-items: center
+  gap: 10px
+  flex-wrap: wrap
+
+// Commutateur de vues : meme forme que sur Travail et Frise. Les trois
+// pages doivent se reconnaitre entre elles.
+.op-plane-projects--views
+  display: inline-flex
+  padding: 2px
+  border-radius: 8px
+  background: var(--plane-canvas)
+  border: 1px solid var(--plane-n-500)
+
+.op-plane-projects--view
+  padding: 5px 12px
+  border-radius: 6px
+  font-size: 12.5px
+  color: var(--plane-n-900)
+  text-decoration: none
+
+  &:hover
+    color: var(--plane-n-1200)
+    text-decoration: none
+
+  &.is-current
+    background: var(--plane-surface)
+    color: var(--plane-n-1200)
+    font-weight: 600
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .06)
+
+.op-plane-projects--primary,
+.op-plane-projects--secondary
+  padding: 6px 14px
+  border-radius: 8px
+  font-size: 12.5px
+  font-weight: 500
+  text-decoration: none
+
+  &:hover
+    text-decoration: none
+
+.op-plane-projects--primary
+  background: var(--plane-brand)
+  color: #fff
+
+  &:hover
+    background: var(--plane-brand-active)
+    color: #fff
+
+.op-plane-projects--secondary
+  border: 1px solid var(--plane-n-500)
+  color: var(--plane-n-900)
+
+  &:hover
+    background: var(--plane-canvas)
+    color: var(--plane-n-1200)
+
+.op-plane-projects--section
+  margin-top: 22px
+
+.op-plane-projects--section-title
+  margin: 0 0 10px
+  font-size: 11px
+  font-weight: 600
+  letter-spacing: .06em
+  text-transform: uppercase
+  color: var(--plane-n-900)
+
+// --------------------------------------------------------------- Grille
+// auto-fill plutot qu'un nombre fixe de colonnes : la page s'adapte a la
+// largeur reelle sans point de rupture a maintenir.
+.op-plane-projects--grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(264px, 1fr))
+  gap: 12px
+  margin: 0
+  padding: 0
+  list-style: none
+
+.op-plane-projects--card
+  display: flex
+  flex-direction: column
+  border: 1px solid var(--plane-n-500)
+  border-radius: 10px
+  background: var(--plane-surface)
+  transition: border-color 120ms cubic-bezier(.2, .7, .3, 1), box-shadow 120ms cubic-bezier(.2, .7, .3, 1)
+
+  &:hover
+    border-color: var(--plane-n-700)
+    box-shadow: 0 2px 8px rgba(16, 24, 40, .07)
+
+  &.-archived
+    opacity: .72
+
+// Le lien couvre la carte : la cible de clic est la carte entiere, pas le
+// seul titre.
+.op-plane-projects--card-link
+  display: flex
+  flex-direction: column
+  gap: 8px
+  flex: 1 1 auto
+  padding: 14px 14px 10px
+  text-decoration: none
+  color: inherit
+  border-radius: 10px 10px 0 0
+
+  &:hover
+    text-decoration: none
+
+.op-plane-projects--card-head
+  display: flex
+  align-items: center
+  gap: 9px
+  min-width: 0
+
+.op-plane-projects--avatar
+  flex: 0 0 auto
+  display: grid
+  place-items: center
+  width: 28px
+  height: 28px
+  border-radius: 7px
+  background: var(--plane-canvas)
+  border: 1px solid var(--plane-n-500)
+  font-size: 11px
+  font-weight: 600
+  color: var(--plane-n-900)
+
+.op-plane-projects--name
+  min-width: 0
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+  font-size: 14px
+  font-weight: 600
+  color: var(--plane-n-1200)
+
+// Deux lignes maximum : au-dela, la description ferait varier la hauteur
+// des cartes et casserait l'alignement de la grille.
+.op-plane-projects--desc
+  display: -webkit-box
+  -webkit-line-clamp: 2
+  -webkit-box-orient: vertical
+  overflow: hidden
+  font-size: 12.5px
+  line-height: 1.45
+  color: var(--plane-n-900)
+
+.op-plane-projects--meta
+  display: flex
+  align-items: center
+  gap: 8px
+  flex-wrap: wrap
+  margin-top: auto
+  padding-top: 4px
+  font-size: 11.5px
+  color: var(--plane-n-900)
+
+// Pastille d'etat : la couleur porte le sens, le texte le confirme — une
+// pastille seule ne se lit pas en niveaux de gris.
+.op-plane-projects--status
+  padding: 2px 8px
+  border-radius: 999px
+  font-size: 11px
+  font-weight: 600
+  border: 1px solid transparent
+
+  &.-on-track
+    background: #E7F7EE
+    color: #17603A
+    border-color: #BFE8D2
+
+  &.-at-risk
+    background: #FEF5E7
+    color: #7A4A06
+    border-color: #F6DDAE
+
+  &.-off-track
+    background: #FDECEC
+    color: #8A1C1C
+    border-color: #F5C4C4
+
+  &.-not-started,
+  &.-discontinued
+    background: var(--plane-canvas)
+    color: var(--plane-n-900)
+    border-color: var(--plane-n-500)
+
+  &.-finished
+    background: #EDF1FD
+    color: #2A3F91
+    border-color: #C9D5F8
+
+.op-plane-projects--archived-tag
+  padding: 2px 8px
+  border-radius: 999px
+  border: 1px solid var(--plane-n-500)
+  font-size: 11px
+
+// Raccourcis vers les deux autres pages reconstruites. Hors du lien
+// principal : imbriquer un lien dans un lien est invalide.
+.op-plane-projects--card-actions
+  display: flex
+  gap: 6px
+  padding: 8px 14px 12px
+  border-top: 1px solid var(--plane-n-500)
+
+.op-plane-projects--card-action
+  padding: 4px 10px
+  border-radius: 6px
+  font-size: 12px
+  color: var(--plane-n-900)
+  text-decoration: none
+
+  &:hover
+    background: var(--plane-canvas)
+    color: var(--plane-n-1200)
+    text-decoration: none
+
+.op-plane-projects--archived
+  margin-top: 26px
+  border-top: 1px solid var(--plane-n-500)
+  padding-top: 14px
+
+.op-plane-projects--toggle
+  cursor: pointer
+  list-style: none
+  display: flex
+  align-items: center
+  gap: 8px
+
+  &::-webkit-details-marker
+    display: none
+
+.op-plane-projects--count
+  padding: 1px 7px
+  border-radius: 999px
+  background: var(--plane-canvas)
+  border: 1px solid var(--plane-n-500)
+  font-size: 11px
+
+.op-plane-projects--empty
+  padding: 40px 20px
+  text-align: center
+  border: 1px dashed var(--plane-n-500)
+  border-radius: 10px
+
+.op-plane-projects--empty-title
+  margin: 0
+  font-size: 14px
+  font-weight: 600
+  color: var(--plane-n-1200)
+
+.op-plane-projects--empty-body
+  margin: 4px 0 0
+  font-size: 12.5px
+  color: var(--plane-n-900)
+
+// ------------------------------------- Provenance, en portee globale
+// Travail et Frise servent aussi tous les projets a la fois. Il faut alors
+// dire d'ou vient chaque lot, sans pour autant ajouter une ligne : la
+// hauteur de ligne de la frise est partagee avec le calcul des connecteurs.
+.op-plane-work--project
+  flex: 0 0 auto
+  max-width: 180px
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+  padding: 1px 8px
+  border-radius: 999px
+  background: var(--plane-canvas)
+  border: 1px solid var(--plane-n-500)
+  font-size: 11px
+  color: var(--plane-n-900)
+
+.op-gantt--row-project
+  flex: 0 0 auto
+  max-width: 120px
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+  font-size: 11px
+  color: var(--plane-n-900)
