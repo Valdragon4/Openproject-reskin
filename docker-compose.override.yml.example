@@ -1,18 +1,44 @@
-# Ajustements locaux — ne pas committer en amont.
+# Ajustements propres a la machine — le nom sans suffixe est ignore par git.
 #
-# La VM WSL2 de cette machine est plafonnee a 8 Go (voir C:\Users\...\.wslconfig,
-# plafond pose volontairement). Or le compose amont lance le serveur Angular
-# avec --max_old_space_size=8096, soit 8 Go de tas Node a lui seul, auxquels
-# s'ajoutent le backend Rails (~900 Mo), Postgres et memcached.
+# ------------------------------------------------------------ 1. Memoire
+# Le compose amont lance le serveur Angular avec --max_old_space_size=8096,
+# soit 8 Go de tas Node a lui seul, auxquels s'ajoutent le backend Rails
+# (~900 Mo), Postgres et memcached.
 #
-# Resultat : sous la charge d'une recompilation, le noyau tuait le conteneur
-# frontend (exit 137). Les assets cessaient d'etre servis, Angular ne
-# demarrait plus, et OpenProject laissait le contenu masque — la page
-# apparaissait blanche sans la moindre erreur applicative.
+# Sous la charge d'une recompilation, le noyau tue alors le conteneur
+# frontend (exit 137). Les assets cessent d'etre servis, Angular ne demarre
+# plus, et OpenProject laisse le contenu masque — la page apparait BLANCHE,
+# sans la moindre erreur applicative. C'est la panne la plus penible a
+# diagnostiquer de toute l'installation.
 #
 # 3 Go suffisent tres largement : le bundle principal fait 1,95 Mo et la
 # compilation incrementale tourne en une a deux secondes.
+#
+# ------------------------------------- 2. Rechargement du code en developpement
+# OPENPROJECT_DEV_POLL__FILES fait passer Rails sur un surveillant de
+# fichiers par SCRUTATION (voir config/environments/development.rb).
+#
+# Indispensable des que les sources sont montees depuis un hote Windows ou
+# macOS : les notifications du systeme de fichiers (inotify) ne traversent
+# pas le montage, Rails ne voit jamais rien changer et ne recharge jamais.
+# Le symptome est trompeur — une erreur qui cite l'ancien code pendant que
+# la page d'erreur affiche le nouveau fichier, lu directement sur le disque.
+# On croit corriger sans effet.
+#
+# A laisser a "false" sur un hote Linux, ou les notifications fonctionnent :
+# la scrutation coute une verification du disque a chaque requete.
+x-poll: &poll
+  OPENPROJECT_DEV_POLL__FILES: "true"
+
 services:
+  backend:
+    environment:
+      <<: *poll
+
+  worker:
+    environment:
+      <<: *poll
+
   frontend:
     command: "node --max_old_space_size=3072 ./node_modules/@angular/cli/bin/ng serve --host 0.0.0.0"
     restart: unless-stopped
